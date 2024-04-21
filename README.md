@@ -1,12 +1,16 @@
 # bytecode-lang
 
-This project consists of a number of implementations of a simple language that compiles to bytecode. The language is a simple imperative language with a C-like syntax. The bytecode is a simple stack-based bytecode.
+This project consists of a number of implementations of a simple language that
+compiles to bytecode. The language is a simple imperative language with a C-like
+syntax. The bytecode is a simple stack-based bytecode.
 
-The purpose of this project is to try our different techniques to implement and byte code interpreter.
+The purpose of this project is to try our different techniques to implement and
+byte code interpreter.
 
 ## Language
 
-The language is a simple imperative language with a C-like syntax. The language has the following features:
+The language is a simple imperative language with a C-like syntax. The language
+has the following features:
 
 - Variables of type int
 - Arithmetic operations: +, -, *, /
@@ -42,4 +46,36 @@ fn main() {
 The project contains the following implementations:
 
 - Interpreter that interprets the parsed abstract syntax tree directly.
-- Compiler that compiles the parsed abstract syntax tree to bytecode and then interprets the bytecode.
+- Compiler that compiles the parsed abstract syntax tree to bytecode and then
+  interprets the bytecode.
+
+## Grammar
+
+```
+program: {declaration} EOF;
+
+declaration: functionDecl | variableDecl;
+
+functionDecl: "fn" IDENTIFIER "(" [IDENTIFIER {"," IDENTIFIER}] ")" block;
+
+variableDecl: "let" IDENTIFIER ["=" expression] ";";
+
+block: "{" {statement} "}";
+
+statement:
+    block
+  | "if" "(" expression ")" statement ["else" statement]
+  | "while" "(" expression ")" statement
+  | "return" expression ";"
+  | "print" "(" expression {"," expression} ")" ";"
+  | variableDecl
+  | IDENTIFIER "=" expression ";"
+  ;
+
+expression: andExpression {"||" andExpression};
+andExpression: relOpExpression {"&&" relOpExpression};
+relOpExpression: addExpression {("==" | "!=" | "<" | "<=" | ">" | ">=") addExpression};
+addExpression: mulExpression {("+" | "-") mulExpression};
+mulExpression: term {("*" | "/" | "%") term};
+term: NUMBER | "true" | "false" | IDENTIFIER ["(" [expression {"," expression}])]| "(" expression ")";
+```

@@ -1,11 +1,7 @@
 const std = @import("std");
 
-const BCInterpreter = @import("./bc-interpreter.zig");
 const Errors = @import("./errors.zig");
-const Runtime = @import("./runtime.zig").Runtime;
-const V = @import("./value.zig");
-
-const Editor = @import("zigline/main.zig").Editor;
+const Lexer = @import("./lexer.zig").Lexer;
 
 const stdout = std.io.getStdOut().writer();
 
@@ -23,7 +19,9 @@ pub fn main() !void {
     var args = try std.process.argsAlloc(allocator);
     defer std.process.argsFree(allocator, args);
 
-    if (args.len == 4) {} else {
+    if (args.len == 4) {
+        _ = Lexer.init(std.heap.page_allocator);
+    } else {
         try stdout.print("Error: Incorrect number of arguments.\n", .{});
 
         try stdout.print("Usage: {s} [ast] iterations file\n", .{args[0]});
@@ -64,4 +62,6 @@ fn expectError(input: []const u8) !void {
 
 const expectEqual = std.testing.expectEqual;
 
-test "assignment expression" {}
+test "assignment expression" {
+    _ = Lexer.init(std.heap.page_allocator);
+}

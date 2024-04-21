@@ -9,8 +9,6 @@ const ValueKind = @import("./value.zig").ValueKind;
 pub const ParserErrors = error{ FunctionValueExpectedError, LexicalError, LiteralIntError, LiteralFloatError, SyntaxError, OutOfMemory, NotYetImplemented };
 pub const RuntimeErrors = error{ InterpreterError, OutOfMemory, NotYetImplemented };
 
-pub const STREAM_SRC = "repl";
-
 pub const Position = struct {
     start: usize,
     end: usize,
