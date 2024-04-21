@@ -1,5 +1,6 @@
 pub const Op = enum(u8) {
     ret,
+
     push_char, // C
     push_false,
     push_float, // F
