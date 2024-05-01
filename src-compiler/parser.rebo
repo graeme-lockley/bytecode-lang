@@ -1,0 +1,495 @@
+let Str = import("str")
+
+let keywords = {
+   "true": "True",
+   "false": "False",
+   "if": "If",
+   "else": "Else",
+   "while": "While",
+   "return": "Return",
+   "print": "Print",
+   "var": "Var",
+   "fn": "Fn"
+}
+
+let _Reader(input) {
+   let _idx = 0
+
+   let self = {
+      peek: fn() input[_idx],
+      eos?: fn() _idx >= len(input),
+      next: fn() {
+         let char = input[_idx]
+         _idx := _idx + 1
+         char
+      },
+      idx: fn() _idx,
+      slice: fn(start, end) input[start:end],
+      matchSlice: fn(slice) {
+         let start = _idx
+         let end = start + len(slice)
+
+         if input[start:end] == slice -> {
+            _idx := end
+            true
+         } | false
+      },
+      skipWhitespace: fn() {
+         while Str.whitespace?(self.peek()) -> self.next()
+      }
+   }
+
+   self
+}
+
+let Scanner(input) {
+   let scanner = {
+      reader: _Reader(input),
+      token: { kind: "Nuffink", value: (), start: 0, end: 0 }
+   }
+
+    scanner.token := _next(scanner.reader)
+
+   {
+      eos?: fn() scanner.token.kind == "EOF",
+      peek: fn() scanner.token,
+      next!: fn() {
+         scanner.token := _next(scanner.reader)
+      }
+   }
+}
+
+let _next(reader)  {
+   reader.skipWhitespace()
+
+   let start = reader.idx()
+   let c = reader.peek()
+   reader.next()
+
+   match c
+   | () -> { kind: "EOF", value: (), start: start, end: start }
+   | '"' -> { kind: "LiteralString", value: _string(reader), start: start, end: reader.idx() }
+   | '/' -> {
+      if reader.peek() == '/' -> {
+         while reader.peek() != '\n' -> reader.next()
+         _next(reader)
+      } | { kind: "Slash", value: '/', start: start, end: reader.idx() }
+   }
+   | '(' -> { kind: "LParen", value: '(', start: start, end: reader.idx() }
+   | ')' -> { kind: "RParen", value: ')', start: start, end: reader.idx() }
+   | '{' -> { kind: "LCurley", value: '{', start: start, end: reader.idx() }
+   | '}' -> { kind: "RCurley", value: '}', start: start, end: reader.idx() }
+   | ',' -> { kind: "Comma", value: ',', start: start, end: reader.idx() }
+   | '+' -> { kind: "Plus", value: '+', start: start, end: reader.idx() }
+   | '*' -> { kind: "Star", value: '*', start: start, end: reader.idx() }
+   | '%' -> { kind: "Percentage", value: '%', start: start, end: reader.idx() }
+   | ';' -> { kind: "Semicolon", value: ';', start: start, end: reader.idx() }
+   | '|' -> {
+      if reader.peek() == '|' -> {
+         reader.next()
+         { kind: "BarBar", value: "||", start: start, end: reader.idx() }
+      } | raise { kind: "SyntaxError", expected: '|', got: reader.peek(), position: reader.idx() }
+   }
+   | '&' -> {
+      if reader.peek() == '&' -> {
+         reader.next()
+         { kind: "AmpersandAmpersand", value: "&&", start: start, end: reader.idx() }
+      } | raise { kind: "SyntaxError", expected: '&', got: reader.peek(), position: reader.idx() }
+   }
+   | '=' -> {
+      if reader.peek() == '=' -> {
+         reader.next()
+         { kind: "EqualsEquals", value: "==", start: start, end: reader.idx() }
+      } | { kind: "Equals", value: '=', start: start, end: reader.idx() }
+   }
+   | '!' -> {
+      if reader.peek() == '=' -> {
+         reader.next()
+         { kind: "BangEquals", value: "!=", start: start, end: reader.idx() }
+      } | raise { kind: "SyntaxError", expected: '=', got: reader.peek(), position: reader.idx() }
+   }
+   | '<' -> {
+      if reader.peek() == '=' -> {
+         reader.next()
+         { kind: "LessEquals", value: "<=", start: start, end: reader.idx() }
+      } | { kind: "LessThan", value: '<', start: start, end: reader.idx() }
+   }
+   | '>' -> {
+      if reader.peek() == '=' -> {
+         reader.next()
+         { kind: "GreaterEquals", value: ">=", start: start, end: reader.idx() }
+      } | { kind: "GreaterThan", value: '>', start: start, end: reader.idx() }
+   }
+   | '-' -> { 
+      if Str.digit?(reader.peek()) -> {
+         while Str.digit?(reader.peek()) -> reader.next()
+         { kind: "LiteralInt", value: int(reader.slice(start, reader.idx())), start: start, end: reader.idx() }
+      }
+      | { kind: "Minus", value: '-', start: start, end: reader.idx() }
+   }
+   | _ -> {
+      if Str.digit?(c) -> {
+         while Str.digit?(reader.peek()) -> reader.next()
+         { kind: "LiteralInt", value: int(reader.slice(start, reader.idx())), start: start, end: reader.idx() }
+      }
+      | Str.alpha?(c) -> {
+         while Str.alpha?(reader.peek()) || Str.digit?(reader.peek()) -> reader.next()
+
+         let lexeme = reader.slice(start, reader.idx())
+
+         { kind: keywords[lexeme] ? "Identifier", value: lexeme, start: start, end: reader.idx() }
+      }
+      | raise { kind: "SyntaxError", expected: ['-', '0', '1', '2', '3', '4', '5', '6', '7', '8', '9'], got: c, position: reader.idx() }
+   }
+}
+
+let _string(reader) {
+   let result = []
+
+   while reader.peek() != '"' -> {
+      if reader.peek() == '\\' -> {
+         reader.next()
+
+         match reader.peek()
+         | '"' -> result <! '"'
+         | '\\' -> result <! '\\'
+         | '/' -> result <! '/'
+         | 'b' -> result <! '\x8'
+         | 'f' -> result <! '\x12'
+         | 'n' -> result <! '\n'
+         | 'r' -> result <! '\x13'
+         | 't' -> result <! '\x9'
+         | 'u' -> {
+            reader.next()
+
+            let code = 0
+            let idx = 0
+
+            while idx < 4 -> {
+               let char = reader.next()
+
+               if Str.digit?(char) -> code := code * 16 + (int(char) - 48)
+                | Str.lowercase?(char) -> code := code * 16 + (int(char) - 87)
+                | Str.uppercase?(char) -> code := code * 16 + (int(char) - 55)
+                | raise { kind: "SyntaxError", expected: "hexadecimal digit", got: char, position: reader.idx() }
+
+               idx := idx + 1
+            }
+
+            result <! char(code)
+         }
+         | _ -> raise { kind: "SyntaxError", expected: ['"', '\\', '/', 'b', 'f', 'n', 'r', 't', 'u'] , got: reader.peek(), position: reader.idx() }
+      } | result <! reader.next()
+   }
+
+   reader.next()
+
+   str(result, false)
+}
+
+let scan(input) {
+   let scanner = Scanner(input)
+   let result = []
+
+   while !scanner.eos?() -> {
+      result <! scanner.peek()
+      scanner.next!()
+   }
+
+   result
+}
+
+let using(input, production) {
+   let scanner = Scanner(input)
+
+   production(scanner)
+}
+
+let program(scanner) {
+  let decls = []
+
+  while !scanner.eos?() -> decls <! declaration(scanner)
+  
+  decls
+}
+
+let declaration(scanner) {
+   match scanner.peek().kind
+   | "Fn" -> functionDecl(scanner)
+   | "Var" -> variableDecl(scanner)
+   | _ -> raise { kind: "SyntaxError", expected: ["fn", "var"], got: scanner.peek().kind, position: scanner.peek().start }
+}
+
+let functionDecl(scanner) {
+   _match1("Fn", scanner)
+   let name = scanner.peek().value
+   _match1("Identifier", scanner)
+   _match1("LParen", scanner)
+   let params = []
+
+   if scanner.peek().kind != "RParen" -> {
+      params <! scanner.peek().value
+      _match1("Identifier", scanner)
+
+      while scanner.peek().kind == "Comma" -> {
+         scanner.next!()
+         params <! scanner.peek().value
+         _match1("Identifier", scanner)
+      }
+   }
+
+   _match1("RParen", scanner)
+   let body = []
+
+   _match1("LCurley", scanner)
+   while scanner.peek().kind != "RCurley" -> {
+      body <! statement(scanner)
+   }
+   _match1("RCurley", scanner)
+
+   { kind: "Fn", name: name, params: params, body: body }
+}
+
+let variableDecl(scanner) {
+   _match1("Var", scanner)
+   let name = scanner.peek().value
+   _match1("Identifier", scanner)
+   _match1("Equals", scanner)
+   let value = expression(scanner)
+   _match1("Semicolon", scanner)
+
+   { kind: "Var", name: name, value: value }
+}
+
+let block(scanner) {
+   let stmts = []
+
+   _match1("LCurley", scanner)
+   while scanner.peek().kind != "RCurley" -> {
+      stmts <! statement(scanner)
+   }
+   _match1("RCurley", scanner)
+
+   { kind: "Block", stmts: stmts }
+}
+
+let statement(scanner) {
+   match scanner.peek().kind
+   | "LCurley" -> block(scanner)
+   | "If" -> {
+      scanner.next!()
+      _match1("LParen", scanner)
+      let guard = expression(scanner)
+      _match1("RParen", scanner)
+      let then = statement(scanner)
+      if scanner.peek().kind == "else" -> {
+         scanner.next!()
+
+         { kind: "If", guard: guard, then: then, else: statement(scanner) }
+      } | { kind: "If", guard: guard, then: then }
+   }
+   | "While" -> {
+      scanner.next!()
+      _match1("LParen", scanner)
+      let guard = expression(scanner)
+      _match1("RParen", scanner)
+      let body = statement(scanner)
+
+      { kind: "While", guard: guard, body: body }
+   }
+   | "Return" -> {
+      scanner.next!()
+      let expr = expression(scanner)
+      _match1("Semicolon", scanner)
+
+      { kind: "Return", expr: expr }
+   }
+   | "Print" -> {
+      scanner.next!()
+      let args = []
+      _match1("LParen", scanner)
+      if scanner.peek().kind != "RParen" -> {
+         args <! expression(scanner)
+         while scanner.peek().kind == "Comma" -> {
+            scanner.next!()
+            args <! expression(scanner)
+         }
+      }
+      _match1("RParen", scanner)
+      _match1("Semicolon", scanner)
+
+      { kind: "Print", args: args }
+   }
+   | "Var" -> variableDecl(scanner)
+   | "Identifier" -> {
+      let name = scanner.peek().value
+      scanner.next!()
+
+      if scanner.peek().kind == "Equals" -> {
+         scanner.next!()
+         let value = expression(scanner)
+         _match1("Semicolon", scanner)
+
+         { kind: "Assign", name: name, value: value }
+      } | {
+         let args = []
+
+         _match1("LParen", scanner)
+
+         if scanner.peek().kind != "RParen" -> {
+            args <! expression(scanner)
+
+            while scanner.peek().kind == "Comma" -> {
+               scanner.next!()
+               args <! expression(scanner)
+            }
+         }
+
+         _match1("RParen", scanner)
+         _match1("Semicolon", scanner)
+
+         { kind: "Call", name: name, args: args }
+      }
+   }
+   | _ -> raise { kind: "SyntaxError", expected: ["LCurley", "if", "while", "return", "print", "var", "Identifier"], got: scanner.peek().kind, position: scanner.peek().start }
+}
+
+let expression(scanner) {
+   let t = andExpression(scanner)
+
+   if scanner.peek().kind == "BarBar" -> {
+      t := [t]
+      while scanner.peek().kind == "BarBar" -> {
+         scanner.next!()
+         t <! andExpression(scanner)
+      }
+      { kind: "Or", exprs: t }
+   } | t
+}
+
+let andExpression(scanner) {
+   let t = relOpExpression(scanner)
+
+   if scanner.peek().kind == "AmpersandAmpersand" -> {
+      t := [t]
+      while scanner.peek().kind == "AmpersandAmpersand" -> {
+         scanner.next!()
+         t <! relOpExpression(scanner)
+      }
+      { kind: "And", exprs: t }
+   } | t
+}
+
+let relOpExpression(scanner) {
+   let lhs = addExpression(scanner)
+
+   match scanner.peek().kind
+   | "EqualsEquals" -> {
+      scanner.next!()
+      { kind: "Equals", lhs: lhs, rhs: addExpression(scanner) }
+   }
+   | "BangEquals" -> {
+      scanner.next!()
+      { kind: "NotEquals", lhs: lhs, rhs: addExpression(scanner) }
+   }
+   | "LessEquals" -> {
+      scanner.next!()
+      { kind: "LessEquals", lhs: lhs, rhs: addExpression(scanner) }
+   }
+   | "LessThan" -> {
+      scanner.next!()
+      { kind: "LessThan", lhs: lhs, rhs: addExpression(scanner) }
+   }
+   | "GreaterEquals" -> {
+      scanner.next!()
+      { kind: "GreaterEquals", lhs: lhs, rhs: addExpression(scanner) }
+   }
+   | "GreaterThan" -> {
+      scanner.next!()
+      { kind: "GreaterThan", lhs: lhs, rhs: addExpression(scanner) }
+   }
+   | _ -> lhs
+}
+
+let addExpression(scanner) {
+   let lhs = mulExpression(scanner)
+
+   let op = scanner.peek().kind
+   while op == "Plus" || op == "Minus" -> {
+      scanner.next!()
+      lhs := { kind: if op == "Plus" -> "Add" | "Subtract", lhs: lhs, rhs: mulExpression(scanner) }
+      op := scanner.peek().kind
+   }
+
+   lhs
+}
+
+let mulExpression(scanner) {
+   let lhs = term(scanner)
+
+   let op = scanner.peek().kind
+   while op == "Star" || op == "Slash" || op == "Percentage" -> {
+      scanner.next!()
+      lhs := { kind: if op == "Star" -> "Multiply" | op == "Slash" -> "Divide" | "Modulus", lhs: lhs, rhs: term(scanner) }
+      op := scanner.peek().kind
+   }
+
+   lhs
+}
+
+let term(scanner) {
+   match scanner.peek().kind
+   | "LiteralInt" -> {
+      let token = scanner.peek()
+      scanner.next!()
+      { kind: "LiteralInt", value: token.value }
+   }
+   | "True" -> {
+      scanner.next!()
+      { kind: "LiteralBool", value: true }
+   }
+   | "False" -> {
+      scanner.next!()
+      { kind: "LiteralBool", value: false }
+   }
+   | "LiteralString" -> {
+      let token = scanner.peek()
+      scanner.next!()
+      { kind: "LiteralString", value: token.value }
+   }
+   | "Identifier" -> {
+      let token = scanner.peek()
+      scanner.next!()
+
+      if scanner.peek().kind == "LParen" -> {
+         scanner.next!()
+         let args = []
+
+         if scanner.peek().kind != "RParen" -> {
+            args <! expression(scanner)
+
+            while scanner.peek().kind == "Comma" -> {
+               scanner.next!()
+               args <! expression(scanner)
+            }
+         }
+
+         _match1("RParen", scanner)
+
+         { kind: "Call", name: token.value, args: args }
+      } |
+      { kind: "Identifier", value: token.value }
+   }
+   | "LParen" -> {
+      scanner.next!()
+      let expr = expression(scanner)
+      _match1("RParen", scanner)
+      expr
+   }
+   | _ -> raise { kind: "SyntaxError", expected: ["LiteralInt", "true", "false", "LiteralString", "Identifier"], got: scanner.peek().kind, position: scanner.peek().start }
+}
+
+let _match1(kind, scanner) {
+   if scanner.peek().kind == kind -> scanner.next!()
+    | raise { kind: "SyntaxError", expected: kind, got: scanner.peek().kind, position: scanner.peek().start }
+}

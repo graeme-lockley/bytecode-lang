@@ -32,50 +32,19 @@ fn fib(n) {
 }
 
 fn main() {
-    let n = 0;
+  let n = 0;
 
-    while (n < 10) {
-        print("fib(", n, ") = ", fib(n));
-        n = n + 1;
-    }
+  while (n < 10) {
+    print("fib(", n, ") = ", fib(n));
+    n = n + 1;
+  }
 }
 ```
+
+ A little more of the language and it's [*Rebo*](https://github.com/graeme-lockley/rebo-lang) compiler implementation is described in the [executable test cases](./src-compiler/parser.md).  On this page you will find a description of the language's lexical structure, syntax, AST and the compiler itself.
 
 ## Implementations
 
 The project contains the following implementations:
 
 - Interpreter that interprets the parsed abstract syntax tree directly.
-- Compiler that compiles the parsed abstract syntax tree to bytecode and then
-  interprets the bytecode.
-
-## Grammar
-
-```
-program: {declaration} EOF;
-
-declaration: functionDecl | variableDecl;
-
-functionDecl: "fn" IDENTIFIER "(" [IDENTIFIER {"," IDENTIFIER}] ")" block;
-
-variableDecl: "let" IDENTIFIER ["=" expression] ";";
-
-block: "{" {statement} "}";
-
-statement:
-    block
-  | "if" "(" expression ")" statement ["else" statement]
-  | "while" "(" expression ")" statement
-  | "return" expression ";"
-  | "print" "(" expression {"," expression} ")" ";"
-  | variableDecl
-  | IDENTIFIER "=" expression ";"
-  ;
-
-expression: andExpression {"||" andExpression};
-andExpression: relOpExpression {"&&" relOpExpression};
-relOpExpression: addExpression {("==" | "!=" | "<" | "<=" | ">" | ">=") addExpression};
-addExpression: mulExpression {("+" | "-") mulExpression};
-mulExpression: term {("*" | "/" | "%") term};
-term: NUMBER | "true" | "false" | IDENTIFIER ["(" [expression {"," expression}])]| "(" expression ")";
-```
