@@ -192,20 +192,20 @@ The grammar defines the structure of the language. The grammar is used by the pa
 
 > Parser.using("print();", Parser.statement)
 { kind: "Print"
-, args: [ ] 
+, args: [] 
 }
 
 > Parser.using("print(1);", Parser.statement)
 { kind: "Print"
-, args: [ 
-    { kind: "LiteralInt", value: 1 }
+, args: 
+  [ { kind: "LiteralInt", value: 1 }
   ]
 }
 
 > Parser.using("print(1, 2, 3);", Parser.statement)
 { kind: "Print"
-, args: [ 
-    { kind: "LiteralInt", value: 1 }
+, args:
+  [ { kind: "LiteralInt", value: 1 }
   , { kind: "LiteralInt", value: 2 }
   , { kind: "LiteralInt", value: 3 }
   ]
@@ -223,16 +223,16 @@ The grammar defines the structure of the language. The grammar is used by the pa
 > Parser.using("x(1);", Parser.statement)
 { kind: "Call"
 , name: "x"
-, args: [
-    { kind: "LiteralInt", value: 1 }
+, args: 
+  [ { kind: "LiteralInt", value: 1 }
   ]
 }
 
 > Parser.using("x(1, 2, 3);", Parser.statement)
 { kind: "Call"
 , name: "x"
-, args: [
-    { kind: "LiteralInt", value: 1 }
+, args: 
+  [ { kind: "LiteralInt", value: 1 }
   , { kind: "LiteralInt", value: 2 }
   , { kind: "LiteralInt", value: 3 }
   ]
@@ -439,13 +439,13 @@ The grammar defines the structure of the language. The grammar is used by the pa
 { kind: "Identifier", value: "x" }
 
 > Parser.using("x()", Parser.term)
-{ kind: "Call", name: "x" , args: [] }
+{ kind: "Call", name: "x", args: [] }
 
 > Parser.using("x(1)", Parser.term)
-{ kind: "Call", name: "x" , args: [{ kind: "LiteralInt", value: 1 }] }
+{ kind: "Call", name: "x", args: [{ kind: "LiteralInt", value: 1 }] }
 
 > Parser.using("x(1, true)", Parser.term)
-{ kind: "Call", name: "x" , args: [{ kind: "LiteralInt", value: 1 }, { kind: "LiteralBool", value: true }] }
+{ kind: "Call", name: "x", args: [{ kind: "LiteralInt", value: 1 }, { kind: "LiteralBool", value: true }] }
 
 > Parser.using("(x)", Parser.term)
 { kind: "Identifier", value: "x" }
