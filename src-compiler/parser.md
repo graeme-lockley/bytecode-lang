@@ -8,7 +8,7 @@ The parser is responsible for converting the input source code into an abstract 
 
 The scanner is responsible for converting the input source code into a sequence of tokens. The scanner reads the input source code character by character and groups the characters into tokens.
 
-The scanner definition is described in the following manner:
+The scanner definition is described below:
 
 ```
 tokens
@@ -36,15 +36,17 @@ The following scenarios illustrate the scanner's behavior.
 > let { scan } = import("./parser.rebo")
 
 > scan("123 -10 0")
-[ { kind: "LiteralInt", value: 123, start: 0, end: 3 }, 
-  { kind: "LiteralInt", value: -10, start: 4, end: 7 }, 
-  { kind: "LiteralInt", value: 0, start: 8, end: 9 } ]
+[ { kind: "LiteralInt", value: 123, start: 0, end: 3 }
+, { kind: "LiteralInt", value: -10, start: 4, end: 7 }
+, { kind: "LiteralInt", value: 0, start: 8, end: 9 }
+]
 
 > scan("a Hello a1 A1")
-[ { kind: "Identifier", value: "a", start: 0, end: 1 }, 
-  { kind: "Identifier", value: "Hello", start: 2, end: 7 },
-  { kind: "Identifier", value: "a1", start: 8, end: 10 },
-  { kind: "Identifier", value: "A1", start: 11, end: 13 } ]
+[ { kind: "Identifier", value: "a", start: 0, end: 1 }
+, { kind: "Identifier", value: "Hello", start: 2, end: 7 }
+, { kind: "Identifier", value: "a1", start: 8, end: 10 }
+, { kind: "Identifier", value: "A1", start: 11, end: 13 }
+]
 
 > scan("\"Hello World\"")
 [ { kind: "LiteralString", value: "Hello World", start: 0, end: 13 } ]
@@ -70,8 +72,9 @@ The scanner also supports comments and whitespace. Comments are ignored by the s
 > let { scan } = import("./parser.rebo")
 
 > scan("123 // comment\n 456")
-[ { kind: "LiteralInt", value: 123, start: 0, end: 3 }, 
-  { kind: "LiteralInt", value: 456, start: 16, end: 19 } ]
+[ { kind: "LiteralInt", value: 123, start: 0, end: 3 }
+, { kind: "LiteralInt", value: 456, start: 16, end: 19 }
+]
 ```
 
 ## Grammar
@@ -118,8 +121,9 @@ The grammar defines the structure of the language. The grammar is used by the pa
 [ { kind: "Fn",
     name: "fib",
     params: [ "n" ],
-    body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ] },
-  { kind: "Var", name: "x", value: { kind: "LiteralInt", value: 100 } } ]
+    body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ] }
+, { kind: "Var", name: "x", value: { kind: "LiteralInt", value: 100 } } 
+]
 ```
 
 ### Declaration
@@ -143,10 +147,11 @@ The grammar defines the structure of the language. The grammar is used by the pa
 > let Parser = import("./parser.rebo")
 
 > Parser.using("fn fib(n) { return n; }", Parser.functionDecl)
-{ kind: "Fn",
-  name: "fib",
-  params: [ "n" ],
-  body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ] } 
+{ kind: "Fn"
+, name: "fib"
+, params: [ "n" ]
+, body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ]
+} 
 ```
 
 ### Variable Decl
@@ -167,36 +172,42 @@ The grammar defines the structure of the language. The grammar is used by the pa
 { kind: "Block", stmts: [] }
 
 > Parser.using("if (true) {}", Parser.statement)
-{ kind: "If",
-  guard: { kind: "LiteralBool", value: true },
-  then: { kind: "Block", stmts: [] } }
+{ kind: "If"
+, guard: { kind: "LiteralBool", value: true }
+, then: { kind: "Block", stmts: [] }
+}
 
 > Parser.using("while (true) {}", Parser.statement)
-{ kind: "While",
-  guard: { kind: "LiteralBool", value: true },
-  body: { kind: "Block", stmts: [] } }
+{ kind: "While"
+, guard: { kind: "LiteralBool", value: true }
+, body: { kind: "Block", stmts: [] }
+}
 
 > Parser.using("return true;", Parser.statement)
-{ kind: "Return",
-  expr: { kind: "LiteralBool", value: true } }
+{ kind: "Return"
+, expr: { kind: "LiteralBool", value: true }
+}
 
 > Parser.using("print();", Parser.statement)
-{ kind: "Print",
-  args: [ ] }
+{ kind: "Print"
+, args: [ ] 
+}
 
 > Parser.using("print(1);", Parser.statement)
-{ kind: "Print",
-  args: [ 
+{ kind: "Print"
+, args: [ 
     { kind: "LiteralInt", value: 1 }
-  ] }
+  ]
+}
 
 > Parser.using("print(1, 2, 3);", Parser.statement)
-{ kind: "Print",
-  args: [ 
-    { kind: "LiteralInt", value: 1 },
-    { kind: "LiteralInt", value: 2 },
-    { kind: "LiteralInt", value: 3 }
-  ] }
+{ kind: "Print"
+, args: [ 
+    { kind: "LiteralInt", value: 1 }
+  , { kind: "LiteralInt", value: 2 }
+  , { kind: "LiteralInt", value: 3 }
+  ]
+}
 
 > Parser.using("var x = 100;", Parser.statement)
 { kind: "Var", name: "x", value: { kind: "LiteralInt", value: 100 } }
@@ -208,16 +219,22 @@ The grammar defines the structure of the language. The grammar is used by the pa
 { kind: "Call", name: "x", args: [] }
 
 > Parser.using("x(1);", Parser.statement)
-{ kind: "Call", name: "x", args: [
+{ kind: "Call"
+, name: "x"
+, args: [
     { kind: "LiteralInt", value: 1 }
-  ] }
+  ]
+}
 
 > Parser.using("x(1, 2, 3);", Parser.statement)
-{ kind: "Call", name: "x", args: [
-    { kind: "LiteralInt", value: 1 },
-    { kind: "LiteralInt", value: 2 },
-    { kind: "LiteralInt", value: 3 }
-  ] }
+{ kind: "Call"
+, name: "x"
+, args: [
+    { kind: "LiteralInt", value: 1 }
+  , { kind: "LiteralInt", value: 2 }
+  , { kind: "LiteralInt", value: 3 }
+  ]
+}
 ```
 
 ### Expression
@@ -231,9 +248,9 @@ The grammar defines the structure of the language. The grammar is used by the pa
 > Parser.using("true || false || true", Parser.expression)
 { kind: "Or", 
   exprs: [
-    { kind: "LiteralBool", value: true },
-    { kind: "LiteralBool", value: false },
-    { kind: "LiteralBool", value: true } 
+    { kind: "LiteralBool", value: true }
+  , { kind: "LiteralBool", value: false }
+  , { kind: "LiteralBool", value: true } 
   ]
 }
 ```
@@ -247,11 +264,11 @@ The grammar defines the structure of the language. The grammar is used by the pa
 { kind: "LiteralBool", value: true }
 
 > Parser.using("true && false && true", Parser.expression)
-{ kind: "And", 
-  exprs: [
-    { kind: "LiteralBool", value: true },
-    { kind: "LiteralBool", value: false },
-    { kind: "LiteralBool", value: true } 
+{ kind: "And"
+, exprs: [
+    { kind: "LiteralBool", value: true }
+  , { kind: "LiteralBool", value: false }
+  , { kind: "LiteralBool", value: true }
   ]
 }
 ```
@@ -265,34 +282,40 @@ The grammar defines the structure of the language. The grammar is used by the pa
 { kind: "LiteralBool", value: true }
 
 > Parser.using("true == false", Parser.expression)
-{ kind: "Equals", 
-  lhs: { kind: "LiteralBool", value: true }, 
-  rhs: { kind: "LiteralBool", value: false } }
+{ kind: "Equals"
+, lhs: { kind: "LiteralBool", value: true }
+, rhs: { kind: "LiteralBool", value: false }
+}
 
 > Parser.using("true != false", Parser.expression)
-{ kind: "NotEquals", 
-  lhs: { kind: "LiteralBool", value: true }, 
-  rhs: { kind: "LiteralBool", value: false } }
+{ kind: "NotEquals"
+, lhs: { kind: "LiteralBool", value: true }
+, rhs: { kind: "LiteralBool", value: false }
+}
 
 > Parser.using("true < false", Parser.expression)
-{ kind: "LessThan", 
-  lhs: { kind: "LiteralBool", value: true }, 
-  rhs: { kind: "LiteralBool", value: false } }
+{ kind: "LessThan"
+, lhs: { kind: "LiteralBool", value: true }
+, rhs: { kind: "LiteralBool", value: false }
+}
 
 > Parser.using("true <= false", Parser.expression)
-{ kind: "LessEquals", 
-  lhs: { kind: "LiteralBool", value: true }, 
-  rhs: { kind: "LiteralBool", value: false } }
+{ kind: "LessEquals"
+, lhs: { kind: "LiteralBool", value: true }
+, rhs: { kind: "LiteralBool", value: false }
+}
 
 > Parser.using("true > false", Parser.expression)
-{ kind: "GreaterThan", 
-  lhs: { kind: "LiteralBool", value: true }, 
-  rhs: { kind: "LiteralBool", value: false } }
+{ kind: "GreaterThan"
+, lhs: { kind: "LiteralBool", value: true }
+, rhs: { kind: "LiteralBool", value: false }
+}
 
 > Parser.using("true >= false", Parser.expression)
-{ kind: "GreaterEquals", 
-  lhs: { kind: "LiteralBool", value: true }, 
-  rhs: { kind: "LiteralBool", value: false } }
+{ kind: "GreaterEquals"
+, lhs: { kind: "LiteralBool", value: true }
+, rhs: { kind: "LiteralBool", value: false }
+}
 ```
 
 ### Add Op Expression
@@ -304,28 +327,36 @@ The grammar defines the structure of the language. The grammar is used by the pa
 { kind: "LiteralInt", value: 1 }
 
 > Parser.using("1 + 2", Parser.expression)
-{ kind: "Add", 
-  lhs: { kind: "LiteralInt", value: 1 },
-  rhs: { kind: "LiteralInt", value: 2 } }
+{ kind: "Add"
+, lhs: { kind: "LiteralInt", value: 1 }
+, rhs: { kind: "LiteralInt", value: 2 }
+}
 
 > Parser.using("1 + 2 + 3", Parser.expression)
-{ kind: "Add", 
-  lhs: { kind: "Add", 
-    lhs: { kind: "LiteralInt", value: 1 },
-    rhs: { kind: "LiteralInt", value: 2 } },
-  rhs: { kind: "LiteralInt", value: 3 } }
+{ kind: "Add"
+, lhs:
+  { kind: "Add"
+  , lhs: { kind: "LiteralInt", value: 1 }
+  , rhs: { kind: "LiteralInt", value: 2 }
+  }
+, rhs: { kind: "LiteralInt", value: 3 }
+}
 
 > Parser.using("1 - 2", Parser.expression)
-{ kind: "Subtract", 
-  lhs: { kind: "LiteralInt", value: 1 },
-  rhs: { kind: "LiteralInt", value: 2 } }
+{ kind: "Subtract"
+, lhs: { kind: "LiteralInt", value: 1 }
+, rhs: { kind: "LiteralInt", value: 2 }
+}
 
 > Parser.using("1 - 2 - 3", Parser.expression)
-{ kind: "Subtract", 
-  lhs: { kind: "Subtract", 
-    lhs: { kind: "LiteralInt", value: 1 },
-    rhs: { kind: "LiteralInt", value: 2 } },
-  rhs: { kind: "LiteralInt", value: 3 } }
+{ kind: "Subtract"
+, lhs:
+  { kind: "Subtract"
+  , lhs: { kind: "LiteralInt", value: 1 }
+  , rhs: { kind: "LiteralInt", value: 2 } 
+  }
+, rhs: { kind: "LiteralInt", value: 3 }
+}
 ```
 
 ### Mul Op Expression
@@ -337,40 +368,52 @@ The grammar defines the structure of the language. The grammar is used by the pa
 { kind: "LiteralInt", value: 1 }
 
 > Parser.using("1 * 2", Parser.expression)
-{ kind: "Multiply", 
-  lhs: { kind: "LiteralInt", value: 1 },
-  rhs: { kind: "LiteralInt", value: 2 } }
+{ kind: "Multiply"
+, lhs: { kind: "LiteralInt", value: 1 }
+, rhs: { kind: "LiteralInt", value: 2 }
+}
 
 > Parser.using("1 * 2 * 3", Parser.expression)
-{ kind: "Multiply", 
-  lhs: { kind: "Multiply", 
-    lhs: { kind: "LiteralInt", value: 1 },
-    rhs: { kind: "LiteralInt", value: 2 } },
-  rhs: { kind: "LiteralInt", value: 3 } }
+{ kind: "Multiply"
+, lhs:
+  { kind: "Multiply"
+  , lhs: { kind: "LiteralInt", value: 1 }
+  , rhs: { kind: "LiteralInt", value: 2 }
+  }
+, rhs: { kind: "LiteralInt", value: 3 }
+}
 
 > Parser.using("1 / 2", Parser.expression)
-{ kind: "Divide", 
-  lhs: { kind: "LiteralInt", value: 1 },
-  rhs: { kind: "LiteralInt", value: 2 } }
+{ kind: "Divide"
+, lhs: { kind: "LiteralInt", value: 1 }
+, rhs: { kind: "LiteralInt", value: 2 }
+}
 
 > Parser.using("1 / 2 / 3", Parser.expression)
-{ kind: "Divide", 
-  lhs: { kind: "Divide", 
-    lhs: { kind: "LiteralInt", value: 1 },
-    rhs: { kind: "LiteralInt", value: 2 } },
-  rhs: { kind: "LiteralInt", value: 3 } }
+{ kind: "Divide"
+, lhs: 
+  { kind: "Divide"
+  , lhs: { kind: "LiteralInt", value: 1 }
+  , rhs: { kind: "LiteralInt", value: 2 } 
+  }
+, rhs: { kind: "LiteralInt", value: 3 }
+}
 
 > Parser.using("1 % 2", Parser.expression)
-{ kind: "Modulus", 
-  lhs: { kind: "LiteralInt", value: 1 },
-  rhs: { kind: "LiteralInt", value: 2 } }
+{ kind: "Modulus"
+, lhs: { kind: "LiteralInt", value: 1 }
+, rhs: { kind: "LiteralInt", value: 2 }
+}
 
 > Parser.using("1 % 2 % 3", Parser.expression)
-{ kind: "Modulus", 
-  lhs: { kind: "Modulus", 
-    lhs: { kind: "LiteralInt", value: 1 },
-    rhs: { kind: "LiteralInt", value: 2 } },
-  rhs: { kind: "LiteralInt", value: 3 } }
+{ kind: "Modulus"
+, lhs: 
+  { kind: "Modulus"
+  , lhs: { kind: "LiteralInt", value: 1 }
+  , rhs: { kind: "LiteralInt", value: 2 }
+  }
+, rhs: { kind: "LiteralInt", value: 3 }
+}
 ```
 
 ### Term
