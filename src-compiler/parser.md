@@ -118,10 +118,11 @@ The grammar defines the structure of the language. The grammar is used by the pa
 > let Parser = import("./parser.rebo")
 
 > Parser.using("fn fib(n) { return n; }\nvar x = 100;", Parser.program)
-[ { kind: "Fn",
-    name: "fib",
-    params: [ "n" ],
-    body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ] }
+[ { kind: "Fn"
+  , name: "fib"
+  , params: [ "n" ]
+  , body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ] 
+  }
 , { kind: "Var", name: "x", value: { kind: "LiteralInt", value: 100 } } 
 ]
 ```
@@ -132,10 +133,11 @@ The grammar defines the structure of the language. The grammar is used by the pa
 > let Parser = import("./parser.rebo")
 
 > Parser.using("fn fib(n) { return n; }", Parser.declaration)
-{ kind: "Fn",
-  name: "fib",
-  params: [ "n" ],
-  body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ] } 
+{ kind: "Fn"
+, name: "fib"
+, params: [ "n" ]
+, body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ]
+} 
 
 > Parser.using("var x = 100;", Parser.declaration)
 { kind: "Var", name: "x", value: { kind: "LiteralInt", value: 100 } }

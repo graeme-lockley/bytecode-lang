@@ -205,6 +205,9 @@ let using(input, production) {
    production(scanner)
 }
 
+let parse(input) =
+  Scanner(input) |> program()
+
 let program(scanner) {
   let decls = []
 
