@@ -43,18 +43,14 @@ let _Reader(input) {
 }
 
 let Scanner(input) {
-   let scanner = {
-      reader: _Reader(input),
-      token: { kind: "Nuffink", value: (), start: 0, end: 0 }
-   }
-
-    scanner.token := _next(scanner.reader)
+   let reader = _Reader(input)
+   let token = _next(reader)
 
    {
-      eos?: fn() scanner.token.kind == "EOF",
-      peek: fn() scanner.token,
+      eos?: fn() token.kind == "EOF",
+      peek: fn() token,
       next!: fn() {
-         scanner.token := _next(scanner.reader)
+         token := _next(reader)
       }
    }
 }
