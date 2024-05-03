@@ -31,7 +31,7 @@ fn fib(n) {
   return fib(n - 1) + fib(n - 2);
 }
 
-let n = 0;
+var n = 0;
 
 while (n < 10) {
   print("fib(", n, ") = ", fib(n));
