@@ -1,8 +1,8 @@
 # bytecode-lang
 
-This project consists of a number of implementations of a simple language that compiles to bytecode. The language is a imperative language with a C-like syntax. The bytecode is a stack-based bytecode.
+This project consists of a number of implementations of a simple language that compiles to bytecode. The language is an imperative language with a C-like syntax. The bytecode is stack-based.
 
-The purpose of this project is to try out different techniques to implement a byte code interpreter.
+The purpose of this project is to try out different techniques to implement a bytecode interpreter.
 
 ## Language
 
