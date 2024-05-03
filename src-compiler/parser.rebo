@@ -195,11 +195,8 @@ let scan(input) {
    result
 }
 
-let using(input, production) {
-   let scanner = Scanner(input)
-
-   production(scanner)
-}
+let using(input, production) =
+   Scanner(input) |> production()
 
 let parse(input) =
   Scanner(input) |> program()
@@ -212,11 +209,10 @@ let program(scanner) {
   decls
 }
 
-let declaration(scanner) {
+let declaration(scanner) =
    match scanner.peek().kind
    | "Fn" -> functionDecl(scanner)
    | _ -> statement(scanner)
-}
 
 let functionDecl(scanner) {
    _match1("Fn", scanner)
@@ -271,7 +267,7 @@ let block(scanner) {
    { kind: "Block", stmts: stmts }
 }
 
-let statement(scanner) {
+let statement(scanner) =
    match scanner.peek().kind
    | "LCurley" -> block(scanner)
    | "If" -> {
@@ -350,7 +346,6 @@ let statement(scanner) {
       }
    }
    | _ -> raise { kind: "SyntaxError", expected: ["LCurley", "if", "while", "return", "print", "var", "Identifier"], got: scanner.peek().kind, position: scanner.peek().start }
-}
 
 let expression(scanner) {
    let t = andExpression(scanner)
@@ -435,7 +430,7 @@ let mulExpression(scanner) {
    lhs
 }
 
-let term(scanner) {
+let term(scanner) =
    match scanner.peek().kind
    | "LiteralInt" -> {
       let token = scanner.peek()
@@ -485,9 +480,8 @@ let term(scanner) {
       expr
    }
    | _ -> raise { kind: "SyntaxError", expected: ["LiteralInt", "true", "false", "LiteralString", "Identifier"], got: scanner.peek().kind, position: scanner.peek().start }
-}
 
-let _match1(kind, scanner) {
+let _match1(kind, scanner) =
    if scanner.peek().kind == kind -> scanner.next!()
     | raise { kind: "SyntaxError", expected: kind, got: scanner.peek().kind, position: scanner.peek().start }
-}
+
