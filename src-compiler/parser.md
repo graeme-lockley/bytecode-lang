@@ -84,7 +84,7 @@ The grammar for this language is described using the following definition with t
 ```
 program: {declaration} EOF;
 
-declaration: functionDecl | variableDecl;
+declaration: functionDecl | statement;
 
 functionDecl: "fn" Identifier "(" [Identifier {"," Identifier}] ")" block;
 
@@ -117,13 +117,16 @@ The grammar defines the structure of the language. The grammar is used by the pa
 ```rebo-repl
 > let Parser = import("./parser.rebo")
 
-> Parser.using("fn fib(n) { return n; }\nvar x = 100;", Parser.program)
+> Parser.using("fn fib(n) { return n; }\nvar x = 100; print(fib(x));", Parser.program)
 [ { kind: "Fn"
   , name: "fib"
   , params: [ "n" ]
   , body: [ { kind: "Return", expr: { kind: "Identifier", value: "n" } } ] 
   }
-, { kind: "Var", name: "x", value: { kind: "LiteralInt", value: 100 } } 
+, { kind: "Var", name: "x", value: { kind: "LiteralInt", value: 100 } }
+, { kind: "Print"
+  , args: [ { kind: "Call", name: "fib", args: [ { kind: "Identifier", value: "x" } ]} ]
+  }
 ]
 ```
 

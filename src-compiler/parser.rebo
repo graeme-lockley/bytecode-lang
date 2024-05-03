@@ -215,8 +215,7 @@ let program(scanner) {
 let declaration(scanner) {
    match scanner.peek().kind
    | "Fn" -> functionDecl(scanner)
-   | "Var" -> variableDecl(scanner)
-   | _ -> raise { kind: "SyntaxError", expected: ["fn", "var"], got: scanner.peek().kind, position: scanner.peek().start }
+   | _ -> statement(scanner)
 }
 
 let functionDecl(scanner) {

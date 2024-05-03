@@ -31,13 +31,11 @@ fn fib(n) {
   return fib(n - 1) + fib(n - 2);
 }
 
-fn main() {
-  let n = 0;
+let n = 0;
 
-  while (n < 10) {
-    print("fib(", n, ") = ", fib(n));
-    n = n + 1;
-  }
+while (n < 10) {
+  print("fib(", n, ") = ", fib(n));
+  n = n + 1;
 }
 ```
 
