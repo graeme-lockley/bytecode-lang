@@ -8,5 +8,6 @@ The bytecode is a simple stack-based bytecode.
 > let { compilerDis } = import("./compiler.rebo")
 
 > compilerDis("var x = 10;")
-[ "000000: PUSHI 10"]
+[ [ 0, "PUSHI", 10]
+]
 ```

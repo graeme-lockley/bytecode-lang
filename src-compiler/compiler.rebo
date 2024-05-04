@@ -3,5 +3,5 @@ let Parser = import("./parser.rebo")
 let compiler(input) { }
 
 let compilerDis(input) =
-   [ "000000: PUSHI 10"
+   [ [ 0, "PUSHI", 10]
    ]
