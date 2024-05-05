@@ -202,6 +202,59 @@ Now let's look at logical operators.  These are a little more complex as they in
 
 These examples are a little contrived however the mechanism is sound.
 
+## Function Declaration
+
+The exact mechanism surrounding function declaration is a little more complex as it is necessary to describe the layout of the stack frame.  It is worthwhile to note that there are essentially 2 registers that are used to manage the interpreter's execution - the instruction pointer (`IP`) and local base pointer (`LBP`).
+
+- `IP` is the instruction pointer and is used to keep track of the current instruction being executed.
+- `LBP` is the local base pointer and is used to keep track of the current stack frame.
+
+The stack frame is a collection of values placed onto the stack used to store the return state when, the function's results, function arguments and function local variables.  The stack frame is created when a function is called and is destroyed when the function returns.
+
+Using some ASCII art, and the stack growing downwards, a typical stack frame might look like this:
+
+```
++-------------------------------------+
+| Argument 1                          | <- LBP + 0
++-------------------------------------+
+| Argument 2                          | <- LBP + 1
++-------------------------------------+
+| Function Result                     | <- LBP + 2
++-------------------------------------+
+| IP of instruction following return  | <- LBP + 3
++-------------------------------------+
+| Previous LBP                        | <- LBP + 4
++-------------------------------------+
+| Local 1                             | <- LBP + 5
++-------------------------------------+
+| Local 2                             | <- LBP + 6
++-------------------------------------+
+| Local 3                             | <- LBP + 7
++-------------------------------------+
+```
+
+It is the responsibility of the compiler to generate the correct instructions to manage the stack frame.  The bytecode will need to include instructions to create the function result and push each of the arguments. Invoking `CALL` will automatically cause the function result, `IP` and `LBP` to be pushed and the setting of `IP` and `LBP` in the function.  The operation `RET` will pop the `IP` and `LBP` and arguments off of the stack and return to the calling function with the function result on the top of the stack.
+
+
+Let's see this in action!
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("var x = 10; fn add(a) { return a + x; } print(add(3));")
+[ [ 0, "PUSHI", 10]
+, [ 5, "JMP", 31]
+, [10, "PUSHL", 0]
+, [15, "PUSH", 0]
+, [20, "ADDI"]
+, [21, "STOREL", 1]
+, [26, "RET", 1]
+, [31, "PUSHI", 3]
+, [36, "CALL", 10]
+, [41, "PRINTI"]
+]
+```
+
 ## Statements
 
 Let's look at some scenarios that involve statements.
@@ -218,7 +271,7 @@ The first scenario is a simple assignment where we are updating a global variabl
 , [ 5, "PUSH", 0]
 , [10, "PUSHI", 1]
 , [15, "ADDI"]
-, [16, "STOREG", 0]
+, [16, "STORE", 0]
 , [21, "PUSH", 0]
 , [26, "PRINTI"]
 ]

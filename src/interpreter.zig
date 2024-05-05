@@ -5,6 +5,7 @@ const Op = @import("./ops.zig").Op;
 
 pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
     var ip: usize = 0;
+    var lbp: usize = 0;
     var stack = std.ArrayList(i32).init(allocator);
     defer stack.deinit();
     const stdout = std.io.getStdOut().writer();
@@ -14,6 +15,11 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .PUSH => {
                 const v: usize = @intCast(readInt(bytecode, ip + 1));
                 try stack.append(stack.items[v]);
+                ip += 5;
+            },
+            .PUSHL => {
+                const v: usize = @intCast(readInt(bytecode, ip + 1));
+                try stack.append(stack.items[lbp + v]);
                 ip += 5;
             },
             .PUSHI => {
@@ -26,11 +32,37 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
                 try stack.append(@intCast(ip + 1));
                 ip += 5 + length;
             },
-            .STOREG => {
+            .STORE => {
                 const v = stack.pop();
                 const g: usize = @intCast(readInt(bytecode, ip + 1));
                 stack.items[g] = v;
                 ip += 5;
+            },
+            .STOREL => {
+                const v = stack.pop();
+                const l: usize = @intCast(readInt(bytecode, ip + 1));
+                stack.items[lbp + l] = v;
+                ip += 5;
+            },
+            .CALL => {
+                const newLBP = lbp;
+
+                try stack.append(0);
+                try stack.append(@as(i32, @intCast(ip)) + 5);
+                try stack.append(@intCast(lbp));
+
+                lbp = newLBP;
+
+                ip = @intCast(readInt(bytecode, ip + 1));
+            },
+            .RET => {
+                const n: usize = @intCast(readInt(bytecode, ip + 1));
+
+                const r = stack.items[lbp + n];
+                ip = @intCast(stack.items[lbp + n + 1]);
+                lbp = @intCast(stack.items[lbp + n + 2]);
+                stack.items.len = lbp;
+                try stack.append(r);
             },
             .PRINTLN => {
                 try stdout.print("\n", .{});

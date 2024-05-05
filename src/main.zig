@@ -269,9 +269,24 @@ test "STOREG" {
         @intFromEnum(Op.PUSH), 0x00, 0x00, 0x00, 0x00, // 0
         @intFromEnum(Op.PUSHI), 0x06, 0x00, 0x00, 0x00, // 6
         @intFromEnum(Op.ADDI),
-        @intFromEnum(Op.STOREG), 0x00, 0x00, 0x00, 0x00, // 0
+        @intFromEnum(Op.STORE), 0x00, 0x00, 0x00, 0x00, // 0
         @intFromEnum(Op.PUSH), 0x00, 0x00, 0x00, 0x00, // 0
     };
 
     try expectEqual(11, eval(&code));
+}
+
+test "inc" {
+    const code = [36]u8{
+        @intFromEnum(Op.JMP), 0x1a, 0x00, 0x00, 0x00, // 26
+        @intFromEnum(Op.PUSHL), 0x00, 0x00, 0x00, 0x00, // 0
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00, // 1
+        @intFromEnum(Op.ADDI),
+        @intFromEnum(Op.STOREL), 0x01, 0x00, 0x00, 0x00, // 1
+        @intFromEnum(Op.RET), 0x01, 0x00, 0x00, 0x00, // 1
+        @intFromEnum(Op.PUSHI), 0x29, 0x00, 0x00, 0x00, // 41
+        @intFromEnum(Op.CALL), 0x05, 0x00, 0x00, 0x00, // 5
+    };
+
+    try expectEqual(42, eval(&code));
 }

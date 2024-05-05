@@ -1,0 +1,5 @@
+fn inc(n) {
+  return n + 1;
+}
+
+println(inc(41));

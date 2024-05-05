@@ -1,8 +1,13 @@
 pub const Op = enum(u8) {
     PUSH, // I
+    PUSHL, // I
     PUSHI, // I
     PUSHS, // S
-    STOREG, // I
+    STORE, // I
+    STOREL, // I
+
+    CALL, // I
+    RET, // I
 
     PRINTLN,
     PRINTB,

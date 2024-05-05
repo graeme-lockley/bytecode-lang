@@ -5,10 +5,16 @@ let compile(ast) {
    let bc = _codegen()
    let env = {}
    let globalOffset = 0
+   let patchAddress = ()
 
    ast |> each(fn(stmt)
       match stmt
       | { kind: "Var", name, value } -> {
+         if patchAddress != () -> {
+            bc.patchInt(patchAddress, bc.address())
+            patchAddress := ()
+         }
+
          if env[name] != () -> raise { kind: "CompilerError", reason: "compile: Variable already defined", ast: stmt }
 
          let vtype = _compileExpr(bc, env, value)
@@ -18,10 +24,42 @@ let compile(ast) {
          env[stmt.name] := { kind: "Var", offset: globalOffset }
          globalOffset := globalOffset + 1
       }
-      | _ -> _compileStatement(bc, env, stmt)
+      | { kind: "Fn", name, params, body } -> {
+         if patchAddress == () -> {
+            bc.appendInstruction(Bytecode.JMP)
+            patchAddress := bc.address()
+            bc.appendInt(0)
+         }
+
+         if env[name] != () -> raise { kind: "CompilerError", reason: "compile: Function already defined", ast: stmt }
+
+         env[stmt.name] := { kind: "Fn", params: params, offset: bc.address() }
+
+         let fnEnv = { _localOffset: len(params) + 3, _numberOfArgs: len(params), ...env}
+
+         params |> each(fn(param, offset) {
+            fnEnv[param] := { kind: "LVar", offset: offset }
+         })
+
+         _compileBlock(bc, fnEnv, body)
+      }
+      | _ -> {
+         if patchAddress != () -> {
+            bc.patchInt(patchAddress, bc.address())
+            patchAddress := ()
+         }
+
+         _compileStatement(bc, env, stmt)
+      }
    )
 
    bc.code()
+}
+
+let _compileBlock(bc, env, stmts) {
+   stmts |> each(fn(stmt) {
+      _compileStatement(bc, env, stmt)
+   })
 }
 
 let _compileStatement(bc, env, stmt) =
@@ -35,7 +73,7 @@ let _compileStatement(bc, env, stmt) =
 
       if vtype != "Int" -> raise { kind: "CompilerError", reason: "_compileStatement: Incompatible type", ast: stmt }
 
-      bc.appendInstruction(Bytecode.STOREG)
+      bc.appendInstruction(Bytecode.STORE)
       bc.appendInt(var.offset)
    }
    | { kind: "Print", args } -> {
@@ -60,6 +98,14 @@ let _compileStatement(bc, env, stmt) =
          | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible type", ast: stmt }
       })
       bc.appendInstruction(Bytecode.PRINTLN)
+   }
+   | { kind: "Return", expr } -> {
+      _compileIntExpr(bc, env, expr)
+
+      bc.appendInstruction(Bytecode.STOREL)
+      bc.appendInt(env._numberOfArgs)
+      bc.appendInstruction(Bytecode.RET)
+      bc.appendInt(env._numberOfArgs)
    }
    | _ -> raise { kind: "CompilerError", reason: "_compileStatement: Not implemented", ast: stmt }
 
@@ -152,13 +198,38 @@ let _compileExpr(bc, env, expr) =
       vtype
    }
 
+   | { kind: "Call", name, args } -> {
+      let f = env[name]
+
+      if f == () -> raise { kind: "CompilerError", reason: "_compileExpr: Function not found", ast: expr }
+
+      if f.kind != "Fn" -> raise { kind: "CompilerError", reason: "_compileExpr: Not a function", ast: expr }
+
+      if len(args) != len(f.params) -> raise { kind: "CompilerError", reason: "_compileExpr: Wrong number of arguments", ast: expr }
+
+      args |> each(fn(arg) {
+         _compileIntExpr(bc, env, arg)
+      })
+
+      bc.appendInstruction(Bytecode.CALL)
+      bc.appendInt(f.offset)
+
+      "Int"
+   }
    | { kind: "Identifier", value } -> {
       let var = env[value]
 
-      if var == () -> raise { kind: "CompilerError", reason: "_compileExpr: Variable not found", ast: expr }
-
-      bc.appendInstruction(Bytecode.PUSH)
-      bc.appendInt(var.offset)
+      match var
+      | () -> raise { kind: "CompilerError", reason: "_compileExpr: Variable not found", ast: expr }
+      | { kind: "Var", offset } -> {
+         bc.appendInstruction(Bytecode.PUSH)
+         bc.appendInt(var.offset)
+      }
+      | { kind: "LVar", offset } -> {
+         bc.appendInstruction(Bytecode.PUSHL)
+         bc.appendInt(var.offset)
+      }
+      | _ -> raise { kind: "CompilerError", reason: "_compileExpr: Not a variable", ast: expr }
 
       "Int"
    }
