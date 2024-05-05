@@ -2,7 +2,7 @@ let Bytecode = import("./bytecode.rebo")
 let Parser = import("./parser.rebo")
 
 let compile(ast) {
-   let bc = codegen()
+   let bc = _codegen()
    let env = {}
    let globalOffset = 0
 
@@ -54,7 +54,7 @@ let _compileExpr(bc, env, expr) =
 let compilerDis(input) =
    Parser.parse(input) |> compile() |> Bytecode.disassemble()
 
-let codegen() {
+let _codegen() {
    let bc = ""
 
    {
