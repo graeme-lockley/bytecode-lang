@@ -11,6 +11,7 @@ let print(bc) {
    |> each (fn(instruction) {
       _print(ansi.foreground.lightGray, padLeft(str(instruction[0]), 6), ": ", ansi.control.reset, instruction[1])
       instruction[2:] |> each(fn(t) _print(" ", ansi.foreground.green, t, ansi.control.reset))
+      println()
    })
 
    println()
