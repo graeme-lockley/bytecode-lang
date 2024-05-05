@@ -262,3 +262,16 @@ test "MODULUSI op" {
 
     try expectEqual(1, eval(&code));
 }
+
+test "STOREG" {
+    const code = [26]u8{
+        @intFromEnum(Op.PUSHI), 0x05, 0x00, 0x00, 0x00, // 5
+        @intFromEnum(Op.PUSH), 0x00, 0x00, 0x00, 0x00, // 0
+        @intFromEnum(Op.PUSHI), 0x06, 0x00, 0x00, 0x00, // 6
+        @intFromEnum(Op.ADDI),
+        @intFromEnum(Op.STOREG), 0x00, 0x00, 0x00, 0x00, // 0
+        @intFromEnum(Op.PUSH), 0x00, 0x00, 0x00, 0x00, // 0
+    };
+
+    try expectEqual(11, eval(&code));
+}

@@ -18,34 +18,50 @@ let compile(ast) {
          env[stmt.name] := { kind: "Var", offset: globalOffset }
          globalOffset := globalOffset + 1
       }
-      | { kind: "Print", args } -> {
-         args |> each(fn(arg) {
-            let vtype = _compileExpr(bc, env, arg)
-
-            match vtype
-            | "Bool" -> bc.appendInstruction(Bytecode.PRINTB)
-            | "Int" -> bc.appendInstruction(Bytecode.PRINTI)
-            | "String" -> bc.appendInstruction(Bytecode.PRINTS)
-            | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible type", ast: stmt }
-         })
-      }
-      | { kind: "Println", args } -> {
-         args |> each(fn(arg) {
-            let vtype = _compileExpr(bc, env, arg)
-
-            match vtype
-            | "Bool" -> bc.appendInstruction(Bytecode.PRINTB)
-            | "Int" -> bc.appendInstruction(Bytecode.PRINTI)
-            | "String" -> bc.appendInstruction(Bytecode.PRINTS)
-            | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible type", ast: stmt }
-         })
-         bc.appendInstruction(Bytecode.PRINTLN)
-      }
-      | _ -> raise { kind: "CompilerError", reason: "compile: Not implemented", ast: stmt }
+      | _ -> _compileStatement(bc, env, stmt)
    )
 
    bc.code()
 }
+
+let _compileStatement(bc, env, stmt) =
+   match stmt
+   | { kind: "Assign", name, value } -> {
+      let var = env[name]
+
+      if var == () -> raise { kind: "CompilerError", reason: "_compileStatement: Variable not found", ast: stmt }
+
+      let vtype = _compileExpr(bc, env, value)
+
+      if vtype != "Int" -> raise { kind: "CompilerError", reason: "_compileStatement: Incompatible type", ast: stmt }
+
+      bc.appendInstruction(Bytecode.STOREG)
+      bc.appendInt(var.offset)
+   }
+   | { kind: "Print", args } -> {
+      args |> each(fn(arg) {
+         let vtype = _compileExpr(bc, env, arg)
+
+         match vtype
+         | "Bool" -> bc.appendInstruction(Bytecode.PRINTB)
+         | "Int" -> bc.appendInstruction(Bytecode.PRINTI)
+         | "String" -> bc.appendInstruction(Bytecode.PRINTS)
+         | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible type", ast: stmt }
+      })
+   }
+   | { kind: "Println", args } -> {
+      args |> each(fn(arg) {
+         let vtype = _compileExpr(bc, env, arg)
+
+         match vtype
+         | "Bool" -> bc.appendInstruction(Bytecode.PRINTB)
+         | "Int" -> bc.appendInstruction(Bytecode.PRINTI)
+         | "String" -> bc.appendInstruction(Bytecode.PRINTS)
+         | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible type", ast: stmt }
+      })
+      bc.appendInstruction(Bytecode.PRINTLN)
+   }
+   | _ -> raise { kind: "CompilerError", reason: "_compileStatement: Not implemented", ast: stmt }
 
 let _operatorMap = {
    Equals: [Bytecode.EQI, "Bool"],

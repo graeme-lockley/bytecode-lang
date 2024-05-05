@@ -2,6 +2,7 @@ pub const Op = enum(u8) {
     PUSH, // I
     PUSHI, // I
     PUSHS, // S
+    STOREG, // I
 
     PRINTLN,
     PRINTB,

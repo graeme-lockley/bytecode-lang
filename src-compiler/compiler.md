@@ -201,3 +201,25 @@ Now let's look at logical operators.  These are a little more complex as they in
 ```
 
 These examples are a little contrived however the mechanism is sound.
+
+## Statements
+
+Let's look at some scenarios that involve statements.
+
+### Assignment
+
+The first scenario is a simple assignment where we are updating a global variable.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("var x = 10; x = x + 1; print(x);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSH", 0]
+, [10, "PUSHI", 1]
+, [15, "ADDI"]
+, [16, "STOREG", 0]
+, [21, "PUSH", 0]
+, [26, "PRINTI"]
+]
+```

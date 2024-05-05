@@ -26,6 +26,12 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
                 try stack.append(@intCast(ip + 1));
                 ip += 5 + length;
             },
+            .STOREG => {
+                const v = stack.pop();
+                const g: usize = @intCast(readInt(bytecode, ip + 1));
+                stack.items[g] = v;
+                ip += 5;
+            },
             .PRINTLN => {
                 try stdout.print("\n", .{});
                 ip += 1;
