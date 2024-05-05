@@ -3,7 +3,7 @@ const std = @import("std");
 const Runtime = @import("./../runtime.zig").Runtime;
 const Op = @import("./ops.zig").Op;
 
-pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !void {
+pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
     var ip: usize = 0;
     var stack = std.ArrayList(i32).init(allocator);
     defer stack.deinit();
@@ -51,11 +51,108 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !void {
                 ip += 1;
             },
 
+            .EQI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                if (a == b) {
+                    try stack.append(1);
+                } else {
+                    try stack.append(0);
+                }
+                ip += 1;
+            },
+            .NEQI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                if (a != b) {
+                    try stack.append(1);
+                } else {
+                    try stack.append(0);
+                }
+                ip += 1;
+            },
+            .LTI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                if (a < b) {
+                    try stack.append(1);
+                } else {
+                    try stack.append(0);
+                }
+                ip += 1;
+            },
+            .LEI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                if (a <= b) {
+                    try stack.append(1);
+                } else {
+                    try stack.append(0);
+                }
+                ip += 1;
+            },
+            .GTI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                if (a > b) {
+                    try stack.append(1);
+                } else {
+                    try stack.append(0);
+                }
+                ip += 1;
+            },
+            .GEI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                if (a >= b) {
+                    try stack.append(1);
+                } else {
+                    try stack.append(0);
+                }
+                ip += 1;
+            },
+
+            .ADDI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                try stack.append(a + b);
+                ip += 1;
+            },
+            .SUBTRACTI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                try stack.append(a - b);
+                ip += 1;
+            },
+            .MULTIPLYI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                try stack.append(a * b);
+                ip += 1;
+            },
+            .DIVIDEI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                try stack.append(@divFloor(a, b));
+                ip += 1;
+            },
+            .MODULUSI => {
+                const b = stack.pop();
+                const a = stack.pop();
+                try stack.append(@mod(a, b));
+                ip += 1;
+            },
+
             // else => {
             //     try stdout.print("Unknown opcode: {} at {d}\n", .{ bytecode[ip], ip });
             //     unreachable;
             // },
         }
+    }
+    if (stack.items.len > 0) {
+        return stack.pop();
+    } else {
+        return 0;
     }
 }
 

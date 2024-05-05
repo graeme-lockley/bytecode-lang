@@ -1,4 +1,5 @@
 const std = @import("std");
+const Op = @import("./ops.zig").Op;
 
 const Interpreter = @import("./interpreter.zig");
 
@@ -24,7 +25,7 @@ pub fn main() !void {
         const buffer = try loadBinary(allocator, fileName);
         defer allocator.free(buffer);
 
-        try Interpreter.eval(allocator, buffer);
+        _ = try Interpreter.eval(allocator, buffer);
     } else if (args.len == 3) {
         // const iterations = try std.fmt.parseInt(usize, args[1], 10);
         unreachable;
@@ -44,4 +45,220 @@ fn loadBinary(allocator: std.mem.Allocator, fileName: []const u8) ![]u8 {
     const buffer: []u8 = try file.readToEndAlloc(allocator, fileSize);
 
     return buffer;
+}
+
+fn eval(code: []const u8) !i32 {
+    var gpa = std.heap.GeneralPurposeAllocator(.{}){};
+    const allocator = gpa.allocator();
+    defer {
+        const err = gpa.deinit();
+        if (err == std.heap.Check.leak) {
+            stdout.print("Failed to deinit allocator\n", .{}) catch {};
+            std.process.exit(1);
+        }
+    }
+
+    return try Interpreter.eval(allocator, code);
+}
+
+const expectEqual = std.testing.expectEqual;
+
+test "EQI - success" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.EQI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "EQI - failure" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.EQI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "NEQI - success" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.NEQI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "NEQI - failure" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.NEQI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "LTI - 1 < 2" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.LTI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "LTI - 2 < 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.LTI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "LTI - 1 < 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.LTI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "LEI - 1 <= 2" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.LEI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "LEI - 2 <= 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.LEI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "LEI - 1 <= 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.LEI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "GTI - 1 > 2" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.GTI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "GTI - 2 > 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.GTI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "GTI - 1 > 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.GTI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "GEI - 1 >= 2" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.GEI),
+    };
+
+    try expectEqual(0, eval(&code));
+}
+
+test "GEI - 2 >= 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.GEI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "GEI - 1 >= 1" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.GEI),
+    };
+
+    try expectEqual(1, eval(&code));
+}
+
+test "ADDI op" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI), 0x01, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI), 0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.ADDI),
+    };
+
+    try expectEqual(3, eval(&code));
+}
+
+test "MULTIPLYI op" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI),     0x05, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI),     0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.MULTIPLYI),
+    };
+
+    try expectEqual(10, eval(&code));
+}
+
+test "DIVIDEI op" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI),   0x05, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI),   0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.DIVIDEI),
+    };
+
+    try expectEqual(2, eval(&code));
+}
+
+test "MODULUSI op" {
+    const code = [11]u8{
+        @intFromEnum(Op.PUSHI),    0x05, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.PUSHI),    0x02, 0x00, 0x00, 0x00,
+        @intFromEnum(Op.MODULUSI),
+    };
+
+    try expectEqual(1, eval(&code));
 }
