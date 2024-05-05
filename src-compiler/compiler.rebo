@@ -7,11 +7,11 @@ let compile(ast) {
    let globalOffset = 0
 
    ast |> each(fn(stmt)
-      match stmt.kind
-      | "Var" -> {
-         if env[stmt.name] != () -> raise { kind: "CompilerError", reason: "compile: Variable already defined", ast: stmt }
+      match stmt
+      | { kind: "Var", name, value } -> {
+         if env[name] != () -> raise { kind: "CompilerError", reason: "compile: Variable already defined", ast: stmt }
 
-         let vtype = _compileExpr(bc, env, stmt.value)
+         let vtype = _compileExpr(bc, env, value)
 
          if vtype != "Int" -> raise { kind: "CompilerError", reason: "compile: Only Ints are supported", ast: stmt }
 
@@ -25,9 +25,9 @@ let compile(ast) {
 }
 
 let _compileExpr(bc, env, expr) =
-   match expr.kind
-   | "Identifier" -> {
-      let var = env[expr.value]
+   match expr
+   | { kind: "Identifier", value } -> {
+      let var = env[value]
 
       if var == () -> raise { kind: "CompilerError", reason: "_compileExpr: Variable not found", ast: expr }
 
@@ -36,15 +36,15 @@ let _compileExpr(bc, env, expr) =
 
       "Int"
    }
-   | "LiteralBool" -> {
+   | { kind: "LiteralBool", value } -> {
       bc.appendInstruction(Bytecode.PUSHI)
-      bc.appendInt(if expr.value -> 1 | 0)
+      bc.appendInt(if value -> 1 | 0)
 
       "Bool"
    }
-   | "LiteralInt" -> {
+   | { kind: "LiteralInt", value } -> {
       bc.appendInstruction(Bytecode.PUSHI)
-      bc.appendInt(expr.value)
+      bc.appendInt(value)
 
       "Int"
    }
