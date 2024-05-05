@@ -62,8 +62,8 @@ A number of tokens are pushed into the scanner from the grammar which are loosel
 > scan(", || && = == != < <= > >= + - * / % { } ;")
 [ "Comma", "BarBar", "AmpersandAmpersand", "Equals", "EqualsEquals", "BangEquals", "LessThan", "LessEquals", "GreaterThan", "GreaterEquals", "Plus", "Minus", "Star", "Slash", "Percentage", "LCurley", "RCurley", "Semicolon" ]
 
-> scan("true false if else while return print var fn")
-[ "True", "False", "If", "Else", "While", "Return", "Print", "Var", "Fn" ]
+> scan("true false if else while return print println var fn")
+[ "True", "False", "If", "Else", "While", "Return", "Print", "Println", "Var", "Fn" ]
 ```
 
 The scanner also supports comments and whitespace. Comments are ignored by the scanner, and whitespace is used to separate tokens.
@@ -97,7 +97,7 @@ statement:
   | "if" "(" expression ")" statement ["else" statement]
   | "while" "(" expression ")" statement
   | "return" expression ";"
-  | "print" "(" [expression {"," expression}] ")" ";"
+  | ("print" | "println") "(" [expression {"," expression}] ")" ";"
   | variableDecl
   | Identifier ("=" expression | "(" [expression {"," expression}] ")" ) ";"
   ;

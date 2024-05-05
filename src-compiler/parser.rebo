@@ -8,6 +8,7 @@ let keywords = {
    "while": "While",
    "return": "Return",
    "print": "Print",
+   "println": "Println",
    "var": "Var",
    "fn": "Fn"
 }
@@ -313,6 +314,22 @@ let statement(scanner) =
       _match1("Semicolon", scanner)
 
       { kind: "Print", args: args }
+   }
+   | "Println" -> {
+      scanner.next!()
+      let args = []
+      _match1("LParen", scanner)
+      if scanner.peek().kind != "RParen" -> {
+         args <! expression(scanner)
+         while scanner.peek().kind == "Comma" -> {
+            scanner.next!()
+            args <! expression(scanner)
+         }
+      }
+      _match1("RParen", scanner)
+      _match1("Semicolon", scanner)
+
+      { kind: "Println", args: args }
    }
    | "Var" -> variableDecl(scanner)
    | "Identifier" -> {
