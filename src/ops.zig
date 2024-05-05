@@ -7,4 +7,17 @@ pub const Op = enum(u8) {
     PRINTB,
     PRINTI,
     PRINTS,
+
+    EQI,
+    NEQI,
+    LTI,
+    LEI,
+    GTI,
+    GEI,
+
+    ADDI,
+    SUBTRACTI,
+    MULTIPLYI,
+    DIVIDEI,
+    MODULUSI,
 };

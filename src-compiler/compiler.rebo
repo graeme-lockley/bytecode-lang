@@ -47,8 +47,33 @@ let compile(ast) {
    bc.code()
 }
 
+let _operatorMap = {
+   Equals: [Bytecode.EQI, "Bool"],
+   NotEquals: [Bytecode.NEQI, "Bool"],
+   LessThan: [Bytecode.LTI, "Bool"],
+   LessEquals: [Bytecode.LEI, "Bool"],
+   GreaterThan: [Bytecode.GTI, "Bool"],
+   GreaterEquals: [Bytecode.GEI, "Bool"],
+   Add: [Bytecode.ADDI, "Int"],
+   Subtract: [Bytecode.SUBTRACTI, "Int"],
+   Multiply: [Bytecode.MULTIPLYI, "Int"],
+   Divide: [Bytecode.DIVIDEI, "Int"],
+   Modulus: [Bytecode.MODULUSI, "Int"]
+}
+
 let _compileExpr(bc, env, expr) =
    match expr
+   | { kind, lhs, rhs }  -> {
+      let [op, vtype] = _operatorMap[kind]
+
+      _compileIntExpr(bc, env, lhs)
+      _compileIntExpr(bc, env, rhs)
+
+      bc.appendInstruction(op)
+
+      vtype
+   }
+
    | { kind: "Identifier", value } -> {
       let var = env[value]
 
@@ -80,6 +105,12 @@ let _compileExpr(bc, env, expr) =
    }
    | _ -> raise { kind: "CompilerError", reason: "_compileExpr: Not implemented", ast: expr }
 
+
+let _compileIntExpr(bc, env, expr) {
+   let vtype = _compileExpr(bc, env, expr)
+
+   if vtype != "Int" -> raise { kind: "CompilerError", reason: "_compileIntExpr: not an Int", ast: expr }
+}
 
 let compilerDis(input) =
    Parser.parse(input) |> compile() |> Bytecode.disassemble()

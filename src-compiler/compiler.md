@@ -65,3 +65,103 @@ For completeness, here is a version of the above code using `print` rather than 
 , [41, "PRINTI"]
 ]
 ```
+
+## Expression Scenarios
+
+Now that we have the collective knowledge of the lexer, parser and compiler, let's look at some scenarios that involve expressions.
+
+
+### Rel Op Expression
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("print(10 == 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "EQI"]
+, [11, "PRINTB"]
+]
+
+> compilerDis("print(10 != 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "NEQI"]
+, [11, "PRINTB"]
+]
+
+> compilerDis("print(10 < 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "LTI"]
+, [11, "PRINTB"]
+]
+
+> compilerDis("print(10 <= 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "LEI"]
+, [11, "PRINTB"]
+]
+
+> compilerDis("print(10 > 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "GTI"]
+, [11, "PRINTB"]
+]
+
+> compilerDis("print(10 >= 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "GEI"]
+, [11, "PRINTB"]
+]
+```
+
+### Add Op Expression
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("print(10 + 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "ADDI"]
+, [11, "PRINTI"]
+]
+
+> compilerDis("print(10 - 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "SUBTRACTI"]
+, [11, "PRINTI"]
+]
+```
+
+### Mul Op Expression
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("print(10 * 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "MULTIPLYI"]
+, [11, "PRINTI"]
+]
+
+> compilerDis("print(10 / 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "DIVIDEI"]
+, [11, "PRINTI"]
+]
+
+> compilerDis("print(10 % 20);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSHI", 20]
+, [10, "MODULUSI"]
+, [11, "PRINTI"]
+]
+```
