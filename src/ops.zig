@@ -20,4 +20,8 @@ pub const Op = enum(u8) {
     MULTIPLYI,
     DIVIDEI,
     MODULUSI,
+
+    JMP, // I
+    JMP_EQ_ZERO, // I
+    JMP_NEQ_ZERO, // I
 };

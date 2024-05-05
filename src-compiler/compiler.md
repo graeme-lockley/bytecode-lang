@@ -165,3 +165,39 @@ Now that we have the collective knowledge of the lexer, parser and compiler, let
 , [11, "PRINTI"]
 ]
 ```
+
+### Logical Op Expression
+
+Now let's look at logical operators.  These are a little more complex as they involve branching due to the nature of short-circuiting.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("print(true || false || true);")
+[ [ 0, "PUSHI", 1]
+, [ 5, "JMP_NEQ_ZERO", 40]
+, [10, "PUSHI", 0]
+, [15, "JMP_NEQ_ZERO", 40]
+, [20, "PUSHI", 1]
+, [25, "JMP_NEQ_ZERO", 40]
+, [30, "PUSHI", 0]
+, [35, "JMP", 45]
+, [40, "PUSHI", 1]
+, [45, "PRINTB"]
+]
+
+> compilerDis("print(true && false && true);")
+[ [ 0, "PUSHI", 1]
+, [ 5, "JMP_EQ_ZERO", 40]
+, [10, "PUSHI", 0]
+, [15, "JMP_EQ_ZERO", 40]
+, [20, "PUSHI", 1]
+, [25, "JMP_EQ_ZERO", 40]
+, [30, "PUSHI", 1]
+, [35, "JMP", 45]
+, [40, "PUSHI", 0]
+, [45, "PRINTB"]
+]
+```
+
+These examples are a little contrived however the mechanism is sound.

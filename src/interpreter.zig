@@ -143,6 +143,26 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
                 ip += 1;
             },
 
+            .JMP => {
+                ip = @intCast(readInt(bytecode, ip + 1));
+            },
+            .JMP_EQ_ZERO => {
+                const v = stack.pop();
+                if (v == 0) {
+                    ip = @intCast(readInt(bytecode, ip + 1));
+                } else {
+                    ip += 5;
+                }
+            },
+            .JMP_NEQ_ZERO => {
+                const v = stack.pop();
+                if (v != 0) {
+                    ip = @intCast(readInt(bytecode, ip + 1));
+                } else {
+                    ip += 5;
+                }
+            },
+
             // else => {
             //     try stdout.print("Unknown opcode: {} at {d}\n", .{ bytecode[ip], ip });
             //     unreachable;

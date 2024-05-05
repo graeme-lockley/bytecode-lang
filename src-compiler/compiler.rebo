@@ -63,6 +63,68 @@ let _operatorMap = {
 
 let _compileExpr(bc, env, expr) =
    match expr
+   | { kind: "Or", exprs } -> {
+      if len(exprs) == 0 -> raise { kind: "CompilerError", reason: "_compileExpr: Or with no arguments", ast: expr }
+       | len(exprs) == 1 -> _compileExpr(bc, env, exprs[0])
+       | {
+         let patches = []
+         exprs |> each(fn(e) {
+            _compileBoolExpr(bc, env, e)
+            bc.appendInstruction(Bytecode.JMP_NEQ_ZERO)
+            patches <! bc.address()
+            bc.appendInt(0)
+         })
+
+         bc.appendInstruction(Bytecode.PUSHI)
+         bc.appendInt(0)
+
+         bc.appendInstruction(Bytecode.JMP)
+         let patch = bc.address()
+         bc.appendInt(0)
+
+         patches |> each(fn(addr) {
+            bc.patchInt(addr, bc.address())
+         })
+
+         bc.appendInstruction(Bytecode.PUSHI)
+         bc.appendInt(1)
+
+         bc.patchInt(patch, bc.address())
+
+         "Bool"
+      }
+   }
+   | { kind: "And", exprs } -> {
+      if len(exprs) == 0 -> raise { kind: "CompilerError", reason: "_compileExpr: And with no arguments", ast: expr }
+       | len(exprs) == 1 -> _compileExpr(bc, env, exprs[0])
+       | {
+         let patches = []
+         exprs |> each(fn(e) {
+            _compileBoolExpr(bc, env, e)
+            bc.appendInstruction(Bytecode.JMP_EQ_ZERO)
+            patches <! bc.address()
+            bc.appendInt(0)
+         })
+
+         bc.appendInstruction(Bytecode.PUSHI)
+         bc.appendInt(1)
+
+         bc.appendInstruction(Bytecode.JMP)
+         let patch = bc.address()
+         bc.appendInt(0)
+
+         patches |> each(fn(addr) {
+            bc.patchInt(addr, bc.address())
+         })
+
+         bc.appendInstruction(Bytecode.PUSHI)
+         bc.appendInt(0)
+
+         bc.patchInt(patch, bc.address())
+
+         "Bool"
+      }
+   }
    | { kind, lhs, rhs }  -> {
       let [op, vtype] = _operatorMap[kind]
 
@@ -106,6 +168,12 @@ let _compileExpr(bc, env, expr) =
    | _ -> raise { kind: "CompilerError", reason: "_compileExpr: Not implemented", ast: expr }
 
 
+let _compileBoolExpr(bc, env, expr) {
+   let vtype = _compileExpr(bc, env, expr)
+
+   if vtype != "Bool" -> raise { kind: "CompilerError", reason: "_compileIntExpr: not a Bool", ast: expr }
+}
+
 let _compileIntExpr(bc, env, expr) {
    let vtype = _compileExpr(bc, env, expr)
 
@@ -128,6 +196,12 @@ let _codegen() {
       appendString: fn(s) {
          bc := bc + s
       },
-      code: fn() bc
+      code: fn() bc,
+      address: fn() len(bc),
+      patchInt: fn(addr, n) {
+         let patch = str([char(n % 256), char((n / 256) % 256), char((n / 65536) % 256), char((n / 16777216) % 256)], false)
+
+         bc := bc[:addr] + patch + bc[(addr + 4):]
+      }
    }
 }
