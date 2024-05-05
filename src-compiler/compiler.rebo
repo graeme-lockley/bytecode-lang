@@ -1,7 +1,26 @@
+let Bytecode = import("./bytecode.rebo")
 let Parser = import("./parser.rebo")
 
-let compiler(input) { }
+let compile(ast) {
+   let bc = ""
+
+   ast |> each(fn(stmt)
+      match stmt.kind
+      | "Var" -> bc := bc + _compileExpr(stmt.value)
+      | _ -> raise { kind: "CompilerError", reason: "compile: Not implemented", ast: stmt }
+   )
+
+   bc
+}
+
+let _compileExpr(expr) =
+   match expr.kind
+   | "LiteralInt" -> str(Bytecode.PUSHI, false) + _intToString(expr.value)
+   | _ -> raise { kind: "CompilerError", reason: "_compileExpr: Not implemented", ast: expr }
+
+let _intToString(n) =
+   str([char(n % 256), char((n / 256) % 256), char((n / 65536) % 256), char((n / 16777216) % 256)], false)
+
 
 let compilerDis(input) =
-   [ [ 0, "PUSHI", 10]
-   ]
+   Parser.parse(input) |> compile() |> Bytecode.disassemble()

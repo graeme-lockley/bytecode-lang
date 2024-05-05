@@ -1,0 +1,69 @@
+let FS = import("fs")
+let Path = import("path")
+let Str = import("str")
+
+let padLeft(s, n) = " " * (n - len(s)) + s
+
+let _print = print
+
+let print(bc) {
+   disassemble(bc)
+   |> each (fn(instruction) {
+      _print(ansi.foreground.lightGray, padLeft(str(instruction[0]), 6), ": ", ansi.control.reset, instruction[1])
+      instruction[2:] |> each(fn(t) _print(" ", ansi.foreground.green, t, ansi.control.reset))
+   })
+
+   println()
+}
+
+let disassemble(bc) {
+   let instructions = []
+   let ip = 0
+
+   while ip < len(bc) -> {
+      let op = int(bc[ip])
+
+      let instruction = [ip]
+      if op > len(ops) -> { instruction <! "INVALID" ; ip := ip + 1 }
+       | {
+         instruction <! ops[op][0]
+
+         ip := ip + 1
+
+         each(ops[op][1], fn(i) {
+            match i
+            | 'I' -> { instruction <! _readInt(bc, ip) ; ip := ip + 4 }
+            | 'S' -> { 
+               let s = _readString(bc, ip)
+               instruction <! s
+               ip := ip + 4 + len(s)
+            }
+         })
+      }
+
+      instructions <! instruction
+   }
+
+   instructions
+}
+
+let _readInt(bc, ip) {
+   if len(bc) < ip + 4 -> raise "Unexpected end of bytecode"
+
+   int(bc[ip]) + int(bc[ip + 1]) * 256 + int(bc[ip + 2]) * 65536 + int(bc[ip + 3]) * 16777216
+}
+
+let _readString(bc, ip) =
+   bc[ip + 4:ip + 4 + _readInt(bc, ip)]
+
+let ops =
+   FS.lines(Path.dir(__FILE) + "/../src/ops.zig")
+      |> map(fn(l) Str.trim(l)) 
+      |> filter(fn(line) len(line) > 0 && !Str.startsWith?(line, "pub const") && !Str.startsWith?(line, "}")) 
+      |> map(fn(l) split(l, "//")) 
+      |> map(fn(l) [Str.dropEnd(Str.trim(l[0]), 1), Str.trim(l[1] ? "")])
+
+
+let _scope = scope()
+
+ops |> each(fn(op, idx) rebo.lang["scope.bind!"](_scope, op[0], char(idx)))
