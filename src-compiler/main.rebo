@@ -2,6 +2,7 @@
 
 let CLI = import("cli")
 let FS = import("fs")
+let Path = import("path")
 
 let C = import("./compiler.rebo") 
 let BC = import("./bytecode.rebo") 
@@ -14,10 +15,6 @@ let cli = CLI.parse({
       literal: false
    }    
 })
-
-# let bc = P.parse("var x = 10; var y = x; println(\"x: \", x, \", y: \", y);") |> C.compile()
-# println("bytecode length: ", len(bc), ", bytecode: ", str(bc, true))
-# BC.print(bc)
 
 if len(cli.args) == 0 -> {
     println("Error: expected file name or code literal")
@@ -36,7 +33,10 @@ cli.args |> each(fn(file) {
     println("Compiling file: ", file)
     let code = FS.readFile(file)
     let bc = P.parse(code) |> C.compile()
-    let out = file |> FS.basename() |> FS.replace(".rebo", ".bc")
+
+    let [path, name, _] = file |> Path.split()
+    let out = Path.join(path, name + ".bc")
+
     println("Writing bytecode to ", out)
     FS.writeFile(out, bc)
 })
