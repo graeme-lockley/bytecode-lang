@@ -63,7 +63,6 @@ let ops =
       |> map(fn(l) split(l, "//")) 
       |> map(fn(l) [Str.dropEnd(Str.trim(l[0]), 1), Str.trim(l[1] ? "")])
 
-
 let _scope = scope()
 
 ops |> each(fn(op, idx) rebo.lang["scope.bind!"](_scope, op[0], char(idx)))
