@@ -2,25 +2,40 @@ let Bytecode = import("./bytecode.rebo")
 let Parser = import("./parser.rebo")
 
 let compile(ast) {
-   let bc = ""
+   let bc = codegen()
+   let env = {}
 
    ast |> each(fn(stmt)
       match stmt.kind
-      | "Var" -> bc := bc + _compileExpr(stmt.value)
+      | "Var" -> _compileExpr(bc, stmt.value)
       | _ -> raise { kind: "CompilerError", reason: "compile: Not implemented", ast: stmt }
    )
 
-   bc
+   bc.code()
 }
 
-let _compileExpr(expr) =
+let _compileExpr(bc, expr) =
    match expr.kind
-   | "LiteralInt" -> str(Bytecode.PUSHI, false) + _intToString(expr.value)
+   | "LiteralInt" -> {
+      bc.appendInstruction(Bytecode.PUSHI)
+      bc.appendInt(expr.value)
+   }
    | _ -> raise { kind: "CompilerError", reason: "_compileExpr: Not implemented", ast: expr }
-
-let _intToString(n) =
-   str([char(n % 256), char((n / 256) % 256), char((n / 65536) % 256), char((n / 16777216) % 256)], false)
 
 
 let compilerDis(input) =
    Parser.parse(input) |> compile() |> Bytecode.disassemble()
+
+let codegen() {
+   let bc = ""
+
+   {
+      appendInstruction: fn(op) {
+         bc := bc + str(op, false)
+      },
+      appendInt: fn(n) {
+         bc := bc + str([char(n % 256), char((n / 256) % 256), char((n / 65536) % 256), char((n / 16777216) % 256)], false)
+      },
+      code: fn() bc
+   }
+}
