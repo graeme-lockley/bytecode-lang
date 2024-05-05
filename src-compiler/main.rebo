@@ -1,0 +1,42 @@
+#!env rebo
+
+let CLI = import("cli")
+let FS = import("fs")
+
+let C = import("./compiler.rebo") 
+let BC = import("./bytecode.rebo") 
+let P = import("./parser.rebo") 
+
+let cli = CLI.parse({
+   cmd: false,
+   enforcing: true,
+   opts: {
+      literal: false
+   }    
+})
+
+# let bc = P.parse("var x = 10; var y = x; println(\"x: \", x, \", y: \", y);") |> C.compile()
+# println("bytecode length: ", len(bc), ", bytecode: ", str(bc, true))
+# BC.print(bc)
+
+if len(cli.args) == 0 -> {
+    println("Error: expected file name or code literal")
+    exit(1)
+}
+
+if cli.opts.literal -> {
+    println("Compiling code literal")
+    let bc = P.parse(cli.args[0]) |> C.compile()
+    println("Writing bytecode to out.bc")
+    FS.writeFile("out.bc", bc)
+    exit(0)
+}
+
+cli.args |> each(fn(file) {
+    println("Compiling file: ", file)
+    let code = FS.readFile(file)
+    let bc = P.parse(code) |> C.compile()
+    let out = file |> FS.basename() |> FS.replace(".rebo", ".bc")
+    println("Writing bytecode to ", out)
+    FS.writeFile(out, bc)
+})
