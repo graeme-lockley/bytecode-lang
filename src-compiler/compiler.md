@@ -46,3 +46,22 @@ Let's take this example a little further and compile the code to print both `x` 
 ```
 
 This is the basis of all the compiler does. It takes the AST and generates a sequence of instructions that can be executed by the interpreter.
+
+For completeness, here is a version of the above code using `print` rather than `println`.  The difference in the generated code being that the final `PRINTLN` instruction is not emitted.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("var x = 10; var y = x; print(\"x: \", x, \", y: \", y);")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSH", 0]
+, [10, "PUSHS", "x: "]
+, [18, "PRINTS"]
+, [19, "PUSH", 0]
+, [24, "PRINTI"]
+, [25, "PUSHS", ", y: "]
+, [35, "PRINTS"]
+, [36, "PUSH", 1]
+, [41, "PRINTI"]
+]
+```
