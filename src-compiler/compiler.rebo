@@ -4,21 +4,49 @@ let Parser = import("./parser.rebo")
 let compile(ast) {
    let bc = codegen()
    let env = {}
+   let globalOffset = 0
 
    ast |> each(fn(stmt)
       match stmt.kind
-      | "Var" -> _compileExpr(bc, stmt.value)
+      | "Var" -> {
+         if env[stmt.name] != () -> raise { kind: "CompilerError", reason: "compile: Variable already defined", ast: stmt }
+
+         let vtype = _compileExpr(bc, env, stmt.value)
+
+         if vtype != "Int" -> raise { kind: "CompilerError", reason: "compile: Only Ints are supported", ast: stmt }
+
+         env[stmt.name] := { kind: "Var", offset: globalOffset }
+         globalOffset := globalOffset + 1
+      }
       | _ -> raise { kind: "CompilerError", reason: "compile: Not implemented", ast: stmt }
    )
 
    bc.code()
 }
 
-let _compileExpr(bc, expr) =
+let _compileExpr(bc, env, expr) =
    match expr.kind
+   | "Identifier" -> {
+      let var = env[expr.value]
+
+      if var == () -> raise { kind: "CompilerError", reason: "_compileExpr: Variable not found", ast: expr }
+
+      bc.appendInstruction(Bytecode.PUSH)
+      bc.appendInt(var.offset)
+
+      "Int"
+   }
+   | "LiteralBool" -> {
+      bc.appendInstruction(Bytecode.PUSHI)
+      bc.appendInt(if expr.value -> 1 | 0)
+
+      "Bool"
+   }
    | "LiteralInt" -> {
       bc.appendInstruction(Bytecode.PUSHI)
       bc.appendInt(expr.value)
+
+      "Int"
    }
    | _ -> raise { kind: "CompilerError", reason: "_compileExpr: Not implemented", ast: expr }
 

@@ -11,3 +11,16 @@ The bytecode is a simple stack-based bytecode.
 [ [ 0, "PUSHI", 10]
 ]
 ```
+
+Global variables are stored on the stack and then referenced off of the stack.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("var x = 10; var y = x;")
+[ [ 0, "PUSHI", 10]
+, [ 5, "PUSH", 0]
+]
+```
+
+In this example, the value of `x` is in position `0` on the stack whilst the value of `y` is in position `1` on the stack.
