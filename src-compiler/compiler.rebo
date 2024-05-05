@@ -18,6 +18,29 @@ let compile(ast) {
          env[stmt.name] := { kind: "Var", offset: globalOffset }
          globalOffset := globalOffset + 1
       }
+      | { kind: "Print", args } -> {
+         args |> each(fn(arg) {
+            let vtype = _compileExpr(bc, env, arg)
+
+            match vtype
+            | "Bool" -> bc.appendInstruction(Bytecode.PRINTB)
+            | "Int" -> bc.appendInstruction(Bytecode.PRINTI)
+            | "String" -> bc.appendInstruction(Bytecode.PRINTS)
+            | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible type", ast: stmt }
+         })
+      }
+      | { kind: "Println", args } -> {
+         args |> each(fn(arg) {
+            let vtype = _compileExpr(bc, env, arg)
+
+            match vtype
+            | "Bool" -> bc.appendInstruction(Bytecode.PRINTB)
+            | "Int" -> bc.appendInstruction(Bytecode.PRINTI)
+            | "String" -> bc.appendInstruction(Bytecode.PRINTS)
+            | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible type", ast: stmt }
+         })
+         bc.appendInstruction(Bytecode.PRINTLN)
+      }
       | _ -> raise { kind: "CompilerError", reason: "compile: Not implemented", ast: stmt }
    )
 
@@ -48,6 +71,13 @@ let _compileExpr(bc, env, expr) =
 
       "Int"
    }
+   | { kind: "LiteralString", value } -> {
+      bc.appendInstruction(Bytecode.PUSHS)
+      bc.appendInt(len(value))
+      bc.appendString(value)
+
+      "String"
+   }
    | _ -> raise { kind: "CompilerError", reason: "_compileExpr: Not implemented", ast: expr }
 
 
@@ -63,6 +93,9 @@ let _codegen() {
       },
       appendInt: fn(n) {
          bc := bc + str([char(n % 256), char((n / 256) % 256), char((n / 65536) % 256), char((n / 16777216) % 256)], false)
+      },
+      appendString: fn(s) {
+         bc := bc + s
       },
       code: fn() bc
    }
