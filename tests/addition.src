@@ -1,0 +1,7 @@
+var x = 12;
+
+println(x + 10);
+println(x - 10);
+println(x * 10);
+println(x / 10);
+println(x % 10);
