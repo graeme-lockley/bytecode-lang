@@ -276,3 +276,44 @@ The first scenario is a simple assignment where we are updating a global variabl
 , [26, "PRINTI"]
 ]
 ```
+
+The second scenario is where we are updating a local variable.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("fn inc(a) { var x = 1; x = x + a; return x; } print(inc(10));")
+[ [ 0, "JMP", 41]
+, [ 5, "PUSHI", 1]
+, [10, "PUSHL", 4]
+, [15, "PUSHL", 0]
+, [20, "ADDI"]
+, [21, "STOREL", 4]
+, [26, "PUSHL", 4]
+, [31, "STOREL", 1]
+, [36, "RET", 1]
+, [41, "PUSHI", 10]
+, [46, "CALL", 5]
+, [51, "PRINTI"]
+]
+```
+
+The final scenario is where we update an argument.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("fn inc(a) { a = a + 1; return a; } print(inc(10));")
+[ [ 0, "JMP", 36]
+, [ 5, "PUSHL", 0]
+, [10, "PUSHI", 1]
+, [15, "ADDI"]
+, [16, "STOREL", 0]
+, [21, "PUSHL", 0]
+, [26, "STOREL", 1]
+, [31, "RET", 1]
+, [36, "PUSHI", 10]
+, [41, "CALL", 5]
+, [46, "PRINTI"]
+]
+```

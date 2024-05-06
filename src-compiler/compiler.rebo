@@ -17,9 +17,7 @@ let compile(ast) {
 
          if env[name] != () -> raise { kind: "CompilerError", reason: "compile: Variable already defined", ast: stmt }
 
-         let vtype = _compileExpr(bc, env, value)
-
-         if vtype != "Int" -> raise { kind: "CompilerError", reason: "compile: Only Ints are supported", ast: stmt }
+         _compileIntExpr(bc, env, value)
 
          env[stmt.name] := { kind: "Var", offset: globalOffset }
          globalOffset := globalOffset + 1
@@ -69,11 +67,12 @@ let _compileStatement(bc, env, stmt) =
 
       if var == () -> raise { kind: "CompilerError", reason: "_compileStatement: Variable not found", ast: stmt }
 
-      let vtype = _compileExpr(bc, env, value)
+      _compileIntExpr(bc, env, value)
 
-      if vtype != "Int" -> raise { kind: "CompilerError", reason: "_compileStatement: Incompatible type", ast: stmt }
-
-      bc.appendInstruction(Bytecode.STORE)
+      match var
+      | { kind: "Var", offset } -> bc.appendInstruction(Bytecode.STORE)
+      | { kind: "LVar", offset } -> bc.appendInstruction(Bytecode.STOREL)
+      | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible assignment", ast: stmt }
       bc.appendInt(var.offset)
    }
    | { kind: "Print", args } -> {
@@ -106,6 +105,14 @@ let _compileStatement(bc, env, stmt) =
       bc.appendInt(env._numberOfArgs)
       bc.appendInstruction(Bytecode.RET)
       bc.appendInt(env._numberOfArgs)
+   }
+   | { kind: "Var", name, value } -> {
+      if env[name] != () -> raise { kind: "CompilerError", reason: "compile: Variable already defined", ast: stmt }
+
+      _compileIntExpr(bc, env, value)
+
+      env[stmt.name] := { kind: "LVar", offset: env._localOffset }
+      env._localOffset := env._localOffset + 1
    }
    | _ -> raise { kind: "CompilerError", reason: "_compileStatement: Not implemented", ast: stmt }
 
