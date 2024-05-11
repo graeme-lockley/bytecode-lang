@@ -14,22 +14,32 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
         switch (@as(Op, @enumFromInt(bytecode[ip]))) {
             .PUSH => {
                 const v: usize = @intCast(readInt(bytecode, ip + 1));
+                // std.log.debug("{d} PUSH {d} ({d})", .{ ip, v, stack.items[v] });
                 try stack.append(stack.items[v]);
                 ip += 5;
             },
             .PUSHL => {
-                const v: usize = @intCast(readInt(bytecode, ip + 1));
-                try stack.append(stack.items[lbp + v]);
+                const offset = readInt(bytecode, ip + 1);
+                const idx: usize = @intCast(@as(i32, @intCast(lbp)) + offset);
+                const value = stack.items[idx];
+
+                // std.log.debug("{d} PUSH {d} ({d})", .{ ip, offset, value });
+                try stack.append(value);
+
                 ip += 5;
             },
             .PUSHI => {
                 const v = readInt(bytecode, ip + 1);
+                // std.log.debug("{d} PUSHI {d}", .{ ip, v });
+
                 try stack.append(v);
                 ip += 5;
             },
             .PUSHS => {
                 const length: usize = @intCast(readInt(bytecode, ip + 1));
                 try stack.append(@intCast(ip + 1));
+                // std.log.debug("{d} PUSHS {s}", .{ ip, readString(bytecode, ip + 1) });
+
                 ip += 5 + length;
             },
             .STORE => {
@@ -41,11 +51,14 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .STOREL => {
                 const v = stack.pop();
                 const l: usize = @intCast(readInt(bytecode, ip + 1));
+                // std.log.debug("{d} STOREL {d} ({d})", .{ ip, l, v });
                 stack.items[lbp + l] = v;
                 ip += 5;
             },
             .CALL => {
-                const newLBP = lbp;
+                // std.log.debug("{d} CALL {d}", .{ ip, readInt(bytecode, ip + 1) });
+
+                const newLBP = stack.items.len;
 
                 try stack.append(0);
                 try stack.append(@as(i32, @intCast(ip)) + 5);
@@ -57,12 +70,19 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             },
             .RET => {
                 const n: usize = @intCast(readInt(bytecode, ip + 1));
+                // std.log.debug("{d} RET {d} (result: {d}, ip: {d}, lbp: {d})", .{ ip, n, stack.items[lbp], stack.items[lbp + 1], stack.items[lbp + 2] });
 
-                const r = stack.items[lbp + n];
-                ip = @intCast(stack.items[lbp + n + 1]);
-                lbp = @intCast(stack.items[lbp + n + 2]);
-                stack.items.len = lbp;
+                const oldLBP = lbp;
+                const r = stack.items[lbp];
+                ip = @intCast(stack.items[lbp + 1]);
+                lbp = @intCast(stack.items[lbp + 2]);
+                stack.items.len = oldLBP - n;
+
                 try stack.append(r);
+            },
+            .DISCARD => {
+                _ = stack.pop();
+                ip += 1;
             },
             .PRINTLN => {
                 try stdout.print("\n", .{});
@@ -79,12 +99,14 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             },
             .PRINTI => {
                 const v = stack.pop();
+                // std.log.debug("{d} PRINTI ({d})", .{ ip, v });
                 try stdout.print("{d}", .{v});
                 ip += 1;
             },
             .PRINTS => {
                 const v = stack.pop();
                 const s = readString(bytecode, @intCast(v));
+                // std.log.debug("{d} PRINTS ({s})", .{ ip, s });
                 try stdout.print("{s}", .{s});
                 ip += 1;
             },
@@ -112,6 +134,8 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .LTI => {
                 const b = stack.pop();
                 const a = stack.pop();
+                // std.log.debug("{d} LEI ({d} {d})", .{ ip, a, b });
+
                 if (a < b) {
                     try stack.append(1);
                 } else {
@@ -182,10 +206,12 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             },
 
             .JMP => {
+                // std.log.debug("{d} JMP {d}", .{ ip, readInt(bytecode, ip + 1) });
                 ip = @intCast(readInt(bytecode, ip + 1));
             },
             .JMP_EQ_ZERO => {
                 const v = stack.pop();
+                // std.log.debug("{d} JMP_EQ_ZERO {d} ({d})", .{ ip, readInt(bytecode, ip + 1), v });
                 if (v == 0) {
                     ip = @intCast(readInt(bytecode, ip + 1));
                 } else {

@@ -3,8 +3,7 @@ let Parser = import("./parser.rebo")
 
 let compile(ast) {
    let bc = _codegen()
-   let env = {}
-   let globalOffset = 0
+   let env = { _globalOffset: 0 }
    let patchAddress = ()
 
    ast |> each(fn(stmt)
@@ -19,8 +18,8 @@ let compile(ast) {
 
          _compileIntExpr(bc, env, value)
 
-         env[stmt.name] := { kind: "Var", offset: globalOffset }
-         globalOffset := globalOffset + 1
+         env[stmt.name] := { kind: "Var", offset: env._globalOffset }
+         env._globalOffset := env._globalOffset + 1
       }
       | { kind: "Fn", name, params, body } -> {
          if patchAddress == () -> {
@@ -33,10 +32,11 @@ let compile(ast) {
 
          env[stmt.name] := { kind: "Fn", params: params, offset: bc.address() }
 
-         let fnEnv = { _localOffset: len(params) + 3, _numberOfArgs: len(params), ...env}
+         let numberOfParameters = len(params)
+         let fnEnv = { _localOffset: 3, _numberOfArgs: len(params), ...env}
 
          params |> each(fn(param, offset) {
-            fnEnv[param] := { kind: "LVar", offset: offset }
+            fnEnv[param] := { kind: "LVar", offset: offset - numberOfParameters}
          })
 
          _compileBlock(bc, fnEnv, body)
@@ -75,6 +75,45 @@ let _compileStatement(bc, env, stmt) =
       | _ -> raise { kind: "CompilerError", reason: "compile: Incompatible assignment", ast: stmt }
       bc.appendInt(var.offset)
    }
+   | { kind: "Block", stmts } -> {
+      let blockEnv = { _localOffset: env._localOffset ? env._globalOffset, ...env }
+
+      _compileBlock(bc, blockEnv, stmts)
+
+      stmts |> filter(fn (stmt) stmt.kind == "Var") |> each(fn(_) {
+         bc.appendInstruction(Bytecode.DISCARD)
+      })
+   }
+   | { kind: "If", guard, then, else } -> {
+      _compileBoolExpr(bc, env, guard)
+
+      bc.appendInstruction(Bytecode.JMP_EQ_ZERO)
+      let patch = bc.address()
+      bc.appendInt(0)
+
+      _compileStatement(bc, env, then)
+
+      bc.appendInstruction(Bytecode.JMP)
+      let patch2 = bc.address()
+      bc.appendInt(0)
+
+      bc.patchInt(patch, bc.address())
+
+      _compileStatement(bc, env, else)
+
+      bc.patchInt(patch2, bc.address())
+   }
+   | { kind: "If", guard, then } -> {
+      _compileBoolExpr(bc, env, guard)
+
+      bc.appendInstruction(Bytecode.JMP_EQ_ZERO)
+      let patch = bc.address()
+      bc.appendInt(0)
+
+      _compileStatement(bc, env, then)
+
+      bc.patchInt(patch, bc.address())
+   }
    | { kind: "Print", args } -> {
       args |> each(fn(arg) {
          let vtype = _compileExpr(bc, env, arg)
@@ -102,7 +141,7 @@ let _compileStatement(bc, env, stmt) =
       _compileIntExpr(bc, env, expr)
 
       bc.appendInstruction(Bytecode.STOREL)
-      bc.appendInt(env._numberOfArgs)
+      bc.appendInt(0)
       bc.appendInstruction(Bytecode.RET)
       bc.appendInt(env._numberOfArgs)
    }
@@ -113,6 +152,22 @@ let _compileStatement(bc, env, stmt) =
 
       env[stmt.name] := { kind: "LVar", offset: env._localOffset }
       env._localOffset := env._localOffset + 1
+   }
+   | { kind: "While", guard, body } -> {
+      let start = bc.address()
+
+      _compileBoolExpr(bc, env, guard)
+
+      bc.appendInstruction(Bytecode.JMP_EQ_ZERO)
+      let patch = bc.address()
+      bc.appendInt(0)
+
+      _compileStatement(bc, env, body)
+
+      bc.appendInstruction(Bytecode.JMP)
+      bc.appendInt(start)
+
+      bc.patchInt(patch, bc.address())
    }
    | _ -> raise { kind: "CompilerError", reason: "_compileStatement: Not implemented", ast: stmt }
 
@@ -285,6 +340,9 @@ let _codegen() {
          bc := bc + str(op, false)
       },
       appendInt: fn(n) {
+         if n < 0 -> {
+            n := n + 4294967296
+         }
          bc := bc + str([char(n % 256), char((n / 256) % 256), char((n / 65536) % 256), char((n / 16777216) % 256)], false)
       },
       appendString: fn(s) {

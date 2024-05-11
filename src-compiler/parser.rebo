@@ -277,7 +277,7 @@ let statement(scanner) =
       let guard = expression(scanner)
       _match1("RParen", scanner)
       let then = statement(scanner)
-      if scanner.peek().kind == "else" -> {
+      if scanner.peek().kind == "Else" -> {
          scanner.next!()
 
          { kind: "If", guard: guard, then: then, else: statement(scanner) }

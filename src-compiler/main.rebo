@@ -26,6 +26,9 @@ if cli.opts.literal -> {
     let bc = P.parse(cli.args[0]) |> C.compile()
     println("Writing bytecode to out.bc")
     FS.writeFile("out.bc", bc)
+
+    BC.print(bc)
+
     exit(0)
 }
 
@@ -39,4 +42,5 @@ cli.args |> each(fn(file) {
 
     println("Writing bytecode to ", out)
     FS.writeFile(out, bc)
+    BC.print(bc)
 })

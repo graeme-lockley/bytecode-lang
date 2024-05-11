@@ -182,6 +182,13 @@ The grammar defines the structure of the language. The grammar is used by the pa
 , then: { kind: "Block", stmts: [] }
 }
 
+> Parser.using("if (true) {} else {}", Parser.statement)
+{ kind: "If"
+, guard: { kind: "LiteralBool", value: true }
+, then: { kind: "Block", stmts: [] }
+, else: { kind: "Block", stmts: [] }
+}
+
 > Parser.using("while (true) {}", Parser.statement)
 { kind: "While"
 , guard: { kind: "LiteralBool", value: true }

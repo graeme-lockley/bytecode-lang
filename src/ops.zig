@@ -8,6 +8,7 @@ pub const Op = enum(u8) {
 
     CALL, // I
     RET, // I
+    DISCARD,
 
     PRINTLN,
     PRINTB,

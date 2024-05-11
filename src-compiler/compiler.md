@@ -215,21 +215,21 @@ Using some ASCII art, and the stack growing downwards, a typical stack frame mig
 
 ```
 +-------------------------------------+
-| Argument 1                          | <- LBP + 0
+| Argument 1                          | <- LBP - 2
 +-------------------------------------+
-| Argument 2                          | <- LBP + 1
+| Argument 2                          | <- LBP - 1
 +-------------------------------------+
-| Function Result                     | <- LBP + 2
+| Function Result                     | <- LBP
 +-------------------------------------+
-| IP of instruction following return  | <- LBP + 3
+| IP of instruction following return  | <- LBP + 1
 +-------------------------------------+
-| Previous LBP                        | <- LBP + 4
+| Previous LBP                        | <- LBP + 2
 +-------------------------------------+
-| Local 1                             | <- LBP + 5
+| Local 1                             | <- LBP + 3
 +-------------------------------------+
-| Local 2                             | <- LBP + 6
+| Local 2                             | <- LBP + 4
 +-------------------------------------+
-| Local 3                             | <- LBP + 7
+| Local 3                             | <- LBP + 5
 +-------------------------------------+
 ```
 
@@ -244,10 +244,10 @@ Let's see this in action!
 > compilerDis("var x = 10; fn add(a) { return a + x; } print(add(3));")
 [ [ 0, "PUSHI", 10]
 , [ 5, "JMP", 31]
-, [10, "PUSHL", 0]
+, [10, "PUSHL", -1]
 , [15, "PUSH", 0]
 , [20, "ADDI"]
-, [21, "STOREL", 1]
+, [21, "STOREL", 0]
 , [26, "RET", 1]
 , [31, "PUSHI", 3]
 , [36, "CALL", 10]
@@ -285,12 +285,12 @@ The second scenario is where we are updating a local variable.
 > compilerDis("fn inc(a) { var x = 1; x = x + a; return x; } print(inc(10));")
 [ [ 0, "JMP", 41]
 , [ 5, "PUSHI", 1]
-, [10, "PUSHL", 4]
-, [15, "PUSHL", 0]
+, [10, "PUSHL", 3]
+, [15, "PUSHL", -1]
 , [20, "ADDI"]
-, [21, "STOREL", 4]
-, [26, "PUSHL", 4]
-, [31, "STOREL", 1]
+, [21, "STOREL", 3]
+, [26, "PUSHL", 3]
+, [31, "STOREL", 0]
 , [36, "RET", 1]
 , [41, "PUSHI", 10]
 , [46, "CALL", 5]
@@ -305,15 +305,92 @@ The final scenario is where we update an argument.
 
 > compilerDis("fn inc(a) { a = a + 1; return a; } print(inc(10));")
 [ [ 0, "JMP", 36]
-, [ 5, "PUSHL", 0]
+, [ 5, "PUSHL", -1]
 , [10, "PUSHI", 1]
 , [15, "ADDI"]
-, [16, "STOREL", 0]
-, [21, "PUSHL", 0]
-, [26, "STOREL", 1]
+, [16, "STOREL", -1]
+, [21, "PUSHL", -1]
+, [26, "STOREL", 0]
 , [31, "RET", 1]
 , [36, "PUSHI", 10]
 , [41, "CALL", 5]
 , [46, "PRINTI"]
+]
+```
+
+### Block Statement
+
+Although the block statement is not a statement in itself, it is a collection of statements.  The compiler will generate the instructions for each statement in the block.  Further to that, all local declarations will need to removed off of the stack.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("{ var x = 10; var y = x + 4 ; print(y); }")
+[ [ 0, "PUSHI", 10]
+, [5, "PUSHL", 0]
+, [10, "PUSHI", 4]
+, [15, "ADDI"]
+, [16, "PUSHL", 1]
+, [21, "PRINTI"]
+, [22, "DISCARD"]
+, [23, "DISCARD"]
+]
+```
+
+### If Statement
+
+There are two forms of an if statement - without an else and with an else.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("if (true) println(1); println(3);")
+[ [ 0, "PUSHI", 1]
+, [ 5, "JMP_EQ_ZERO", 17]
+, [10, "PUSHI", 1]
+, [15, "PRINTI"]
+, [16, "PRINTLN"]
+, [17, "PUSHI", 3]
+, [22, "PRINTI"]
+, [23, "PRINTLN"]
+]
+
+> compilerDis("if (true) { println(1); } else println(2); println(3);")
+[ [ 0, "PUSHI", 1]
+, [ 5, "JMP_EQ_ZERO", 22]
+, [10, "PUSHI", 1]
+, [15, "PRINTI"]
+, [16, "PRINTLN"]
+, [17, "JMP", 29]
+, [22, "PUSHI", 2]
+, [27, "PRINTI"]
+, [28, "PRINTLN"]
+, [29, "PUSHI", 3]
+, [34, "PRINTI"]
+, [35, "PRINTLN"]
+]
+```
+
+### While Statement
+
+The while statement is a little more complex as it involves a loop.  The compiler will need to generate the instructions to jump back to the start of the loop if the condition is true.
+
+```rebo-repl
+> let { compilerDis } = import("./compiler.rebo")
+
+> compilerDis("var x = 0; while (x < 10) { println(x); x = x + 1; }")
+[ [0, "PUSHI", 0]
+, [5, "PUSH", 0]
+, [10, "PUSHI", 10]
+, [15, "LTI"]
+, [16, "JMP_EQ_ZERO", 49]
+, [21, "PUSH", 0]
+, [26, "PRINTI"]
+, [27, "PRINTLN"]
+, [28, "PUSH", 0]
+, [33, "PUSHI", 1]
+, [38, "ADDI"]
+, [39, "STORE", 0]
+, [44, "JMP", 5]
 ]
 ```

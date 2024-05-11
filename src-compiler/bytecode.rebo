@@ -51,7 +51,10 @@ let disassemble(bc) {
 let _readInt(bc, ip) {
    if len(bc) < ip + 4 -> raise "Unexpected end of bytecode"
 
-   int(bc[ip]) + int(bc[ip + 1]) * 256 + int(bc[ip + 2]) * 65536 + int(bc[ip + 3]) * 16777216
+   let v = int(bc[ip]) + int(bc[ip + 1]) * 256 + int(bc[ip + 2]) * 65536 + int(bc[ip + 3]) * 16777216
+
+   if v > 2147483647 -> v - 4294967296
+    | v 
 }
 
 let _readString(bc, ip) =
