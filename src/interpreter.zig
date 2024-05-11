@@ -45,6 +45,7 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .STORE => {
                 const v = stack.pop();
                 const g: usize = @intCast(readInt(bytecode, ip + 1));
+                // std.log.debug("{d} STORE {d} ({d})", .{ ip, g, v });
                 stack.items[g] = v;
                 ip += 5;
             },
@@ -114,6 +115,8 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .EQI => {
                 const b = stack.pop();
                 const a = stack.pop();
+                // std.log.debug("{d} EQI ({d} {d})", .{ ip, a, b });
+
                 if (a == b) {
                     try stack.append(1);
                 } else {
@@ -124,6 +127,8 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .NEQI => {
                 const b = stack.pop();
                 const a = stack.pop();
+                // std.log.debug("{d} NEQI ({d} {d})", .{ ip, a, b });
+
                 if (a != b) {
                     try stack.append(1);
                 } else {
@@ -134,7 +139,7 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .LTI => {
                 const b = stack.pop();
                 const a = stack.pop();
-                // std.log.debug("{d} LEI ({d} {d})", .{ ip, a, b });
+                // std.log.debug("{d} LTI ({d} {d})", .{ ip, a, b });
 
                 if (a < b) {
                     try stack.append(1);
@@ -146,6 +151,8 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .LEI => {
                 const b = stack.pop();
                 const a = stack.pop();
+                // std.log.debug("{d} LEI ({d} {d})", .{ ip, a, b });
+
                 if (a <= b) {
                     try stack.append(1);
                 } else {
@@ -156,6 +163,8 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .GTI => {
                 const b = stack.pop();
                 const a = stack.pop();
+                // std.log.debug("{d} GTI ({d} {d})", .{ ip, a, b });
+
                 if (a > b) {
                     try stack.append(1);
                 } else {
@@ -166,6 +175,8 @@ pub fn eval(allocator: std.mem.Allocator, bytecode: []const u8) !i32 {
             .GEI => {
                 const b = stack.pop();
                 const a = stack.pop();
+                // std.log.debug("{d} GEI ({d} {d})", .{ ip, a, b });
+
                 if (a >= b) {
                     try stack.append(1);
                 } else {
