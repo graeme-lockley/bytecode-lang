@@ -31,4 +31,5 @@ jobs:
 
       - name: Test Rebo suite and markdown code blocks
         run: |
-          zig build run -- ./bin/rebo-test
+          cd src-compiler
+          rebo-test
