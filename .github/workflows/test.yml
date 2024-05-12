@@ -35,7 +35,6 @@ jobs:
 
       - name: Test Rebo suite and markdown code blocks
         run: |
-          cd src-compiler
           rebo-test
 
       - name: Test samples
