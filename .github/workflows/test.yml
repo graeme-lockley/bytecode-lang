@@ -29,7 +29,16 @@ jobs:
         run: |
           zig build test
 
+      - name: Build Interpreter
+        run: |
+          zig build
+
       - name: Test Rebo suite and markdown code blocks
         run: |
           cd src-compiler
           rebo-test
+
+      - name: Test samples
+        run: |
+          cd tests
+          ./runner.sh
