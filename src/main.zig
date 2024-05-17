@@ -27,8 +27,21 @@ pub fn main() !void {
 
         _ = try Interpreter.eval(allocator, buffer);
     } else if (args.len == 3) {
-        // const iterations = try std.fmt.parseInt(usize, args[1], 10);
-        unreachable;
+        const iterations = try std.fmt.parseInt(usize, args[1], 10);
+
+        const fileName = args[2];
+        const buffer = try loadBinary(allocator, fileName);
+        defer allocator.free(buffer);
+
+        const start = std.time.nanoTimestamp();
+        for (0..iterations) |i| {
+            _ = i;
+            _ = try Interpreter.eval(allocator, buffer);
+        }
+        const end = std.time.nanoTimestamp();
+
+        const elapsed = end - start;
+        try stdout.print("Elapsed time: {} ns\n", .{elapsed});
     } else {
         try stdout.print("Error: Incorrect number of arguments.\n", .{});
 

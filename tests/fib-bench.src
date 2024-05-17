@@ -1,0 +1,9 @@
+fn fib(v) {
+  if (v < 2) {
+    return 1;
+  }
+
+  return fib(v - 1) + fib(v - 2);
+}
+
+var r = fib(20);
