@@ -1,0 +1,40 @@
+#!/usr/bin/env rebo
+
+let FS = import("fs")
+let Path = import("path")
+let Str = import("str")
+
+let C = import("../src-compiler/compiler.rebo") 
+let BC = import("../src-compiler/bytecode.rebo") 
+let P = import("../src-compiler/parser.rebo") 
+
+let HOME = Path.dir(rebo.args[1])
+
+let compile(src, out) {
+   let bc = FS.readFile(src) |> P.parse() |> C.compile()
+   FS.writeFile(out, bc)
+   BC.print(bc)
+}
+
+ls(HOME) |> map(fn(n) n.name) |> filter(fn(n) Str.endsWith?(n, ".src")) |> each(fn(src) {
+   println("Compiling " + src)
+   let [path, name, _] = HOME + "/" + src |> Path.split()
+
+   let bcName = Path.join(path, name + ".bc")
+   compile(Path.join(path, name + ".src"), bcName)
+
+   let result = exec([HOME + "/../zig-out/bin/bytecode-lang", bcName])
+   if result.code != 0 || len(result.stderr) > 0 -> {
+      println("Failed to run " + bcName)
+      println("Code: ", result.stderr, ": ", result.stderr)
+      exit(1)
+   }
+
+   let expected = FS.readFile(Path.join(path, name + ".out"))
+   if result.stdout != expected -> {
+      println("Failed " + src)
+      println("Expected: ", expected)
+      println("Got: ", result.stdout)
+      exit(1)
+   }
+})

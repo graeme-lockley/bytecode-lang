@@ -39,5 +39,4 @@ jobs:
 
       - name: Test samples
         run: |
-          cd tests
-          ./runner.sh
+          tests/runner.rebo
