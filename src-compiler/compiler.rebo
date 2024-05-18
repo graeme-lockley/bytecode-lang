@@ -54,11 +54,9 @@ let compile(ast) {
    bc.code()
 }
 
-let _compileBlock(bc, env, stmts) {
-   stmts |> each(fn(stmt) {
-      _compileStatement(bc, env, stmt)
-   })
-}
+let _compileBlock(bc, env, stmts) =
+   stmts 
+   |> each(fn(stmt) _compileStatement(bc, env, stmt))
 
 let _compileStatement(bc, env, stmt) =
    match stmt
@@ -330,7 +328,9 @@ let _compileIntExpr(bc, env, expr) {
 }
 
 let compilerDis(input) =
-   Parser.parse(input) |> compile() |> Bytecode.disassemble()
+   Parser.parse(input)
+   |> compile()
+   |> Bytecode.disassemble()
 
 let _codegen() {
    let bc = ""
@@ -340,9 +340,8 @@ let _codegen() {
          bc := bc + str(op, false)
       },
       appendInt: fn(n) {
-         if n < 0 -> {
-            n := n + 4294967296
-         }
+         if n < 0 -> n := n + 4294967296
+         
          bc := bc + str([char(n % 256), char((n / 256) % 256), char((n / 65536) % 256), char((n / 16777216) % 256)], false)
       },
       appendString: fn(s) {
